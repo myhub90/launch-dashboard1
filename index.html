@@ -1,152 +1,779 @@
-class NotionIntegration {
-    constructor(token, databaseId) {
-        this.token = token;
-        this.databaseId = databaseId;
-        this.baseURL = 'https://api.notion.com/v1';
-    }
-
-    async syncTaskToNotion(task, category, completed) {
-        const headers = {
-            'Authorization': `Bearer ${this.token}`,
-            'Notion-Version': '2022-06-28',
-            'Content-Type': 'application/json'
-        };
-
-        const data = {
-            parent: { database_id: this.databaseId },
-            properties: {
-                'Task': {
-                    title: [{ text: { content: task } }]
-                },
-                'Category': {
-                    select: { name: category }
-                },
-                'Completed': {
-                    checkbox: completed
-                },
-                'Date': {
-                    date: { start: new Date().toISOString().split('T')[0] }
-                },
-                'Progress': {
-                    number: this.calculateCategoryProgress(category)
-                }
-            }
-        };
-
-        try {
-            const response = await fetch(`${this.baseURL}/pages`, {
-                method: 'POST',
-                headers: headers,
-                body: JSON.stringify(data)
-            });
-            
-            if (response.ok) {
-                console.log('✅ Task synced to Notion:', task);
-                this.showSyncSuccess();
-            }
-        } catch (error) {
-            console.error('Notion sync failed:', error);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>90-Day Launch Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-    }
 
-    async exportDailyProgress() {
-        const progressData = {
-            date: new Date().toISOString().split('T')[0],
-            business: appData.load('progress-business') || 0,
-            health: appData.load('progress-health') || 0,
-            spanish: appData.load('progress-spanish') || 0,
-            social: appData.load('progress-social') || 0,
-            totalTasks: this.getTotalCompletedTasks(),
-            streak: calculateCurrentStreak()
-        };
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 10px;
+        }
 
-        // Create daily progress entry in Notion
-        await this.createProgressEntry(progressData);
-        return progressData;
-    }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+            overflow: hidden;
+            min-height: calc(100vh - 20px);
+        }
 
-    calculateCategoryProgress(category) {
-        return appData.load(`progress-${category}`) || 0;
-    }
-
-    getTotalCompletedTasks() {
-        let total = 0;
-        document.querySelectorAll('.checkbox-item.completed').forEach(() => total++);
-        return total;
-    }
-
-    showSyncSuccess() {
-        const indicator = document.createElement('div');
-        indicator.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #0369a1;
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
             color: white;
-            padding: 12px 20px;
+            padding: 25px 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8fafc;
+            overflow-x: auto;
+        }
+
+        .tab {
+            padding: 15px 18px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 600;
+            white-space: nowrap;
+            min-width: 100px;
+            text-align: center;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+        }
+
+        .tab.active {
+            background: white;
+            border-bottom-color: #4f46e5;
+            color: #4f46e5;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+            min-height: 400px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .progress-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .progress-card {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .progress-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: conic-gradient(#4f46e5 0deg, #e2e8f0 0deg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px;
+            position: relative;
+        }
+
+        .progress-circle::before {
+            content: '';
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: white;
+            position: absolute;
+        }
+
+        .progress-text {
+            position: relative;
+            z-index: 1;
+            font-weight: 700;
+            color: #1e293b;
+            font-size: 0.9rem;
+        }
+
+        .progress-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .task-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .task-item {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .task-label {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 12px;
+            font-size: 0.9rem;
+        }
+
+        .checkbox-group {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox-item.completed {
+            background: #dcfce7;
+            border-color: #16a34a;
+            color: #15803d;
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            margin: 0;
+        }
+
+        .save-btn {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 12px 25px;
             border-radius: 8px;
             font-weight: 600;
-            z-index: 1000;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-        `;
-        indicator.textContent = '✅ Synced to Notion!';
-        document.body.appendChild(indicator);
+            cursor: pointer;
+            width: 100%;
+            font-size: 0.9rem;
+        }
+
+        .era-timeline {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 100%);
+            border-radius: 12px;
+            border-left: 4px solid #4f46e5;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .era-progress-bar {
+            height: 40px;
+            background: #e2e8f0;
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .era-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444 0%, #f59e0b 25%, #10b981 50%, #8b5cf6 75%);
+            border-radius: 20px;
+            width: 1.11%;
+            transition: width 0.5s ease;
+        }
+
+        .era-labels {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #4f46e5;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 0.8rem;
+        }
         
-        setTimeout(() => {
-            if (indicator.parentNode) {
-                document.body.removeChild(indicator);
+        .export-btn {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin: 10px 0;
+            width: 100%;
+        }
+        
+        .success-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #10b981;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-size: 0.85rem;
+        }
+
+        .success-message.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 90-Day Launch Hub</h1>
+            <div>Launch begins August 25th, 2025</div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('overview')">📊 Overview</div>
+            <div class="tab" onclick="showTab('business')">🏢 Business</div>
+            <div class="tab" onclick="showTab('health')">💪 Health</div>
+            <div class="tab" onclick="showTab('spanish')">🇪🇸 Spanish</div>
+            <div class="tab" onclick="showTab('social')">📱 Social</div>
+        </div>
+
+        <div class="tab-content active" id="overview">
+            <h3 style="text-align: center; margin-bottom: 20px; color: #1e293b;">Progress Overview</h3>
+            
+            <div class="era-timeline">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <div style="font-weight: 700; color: #1e293b; font-size: 1.1rem;">🎯 90-Day Journey Progress</div>
+                    <div id="currentDayDisplay" style="font-weight: 600; color: #4f46e5;">Day 1 of 90</div>
+                </div>
+                
+                <div class="era-progress-bar">
+                    <div class="era-fill" id="eraProgress"></div>
+                    <div class="era-labels">
+                        <span>Launch</span>
+                        <span>Build-Out</span>
+                        <span>Marketing</span>
+                        <span>Maintenance</span>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.85rem;">
+                    <div style="text-align: center;">
+                        <div style="color: #64748b;">Current Era</div>
+                        <div id="currentEraName" style="font-weight: 700; color: #1e293b;">Launch Era</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="color: #64748b;">Era Progress</div>
+                        <div id="eraProgressText" style="font-weight: 700; color: #1e293b;">Day 1 of 15</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="progress-grid">
+                <div class="progress-card">
+                    <div class="progress-title">🏢 Business</div>
+                    <div class="progress-circle" data-category="business">
+                        <div class="progress-text">0%</div>
+                    </div>
+                    <div style="color: #64748b; font-size: 0.75rem; margin-top: 5px;" id="businessTaskCount">0/4 tasks</div>
+                </div>
+                <div class="progress-card">
+                    <div class="progress-title">💪 Health</div>
+                    <div class="progress-circle" data-category="health">
+                        <div class="progress-text">0%</div>
+                    </div>
+                    <div style="color: #64748b; font-size: 0.75rem; margin-top: 5px;" id="healthTaskCount">0/8 tasks</div>
+                </div>
+                <div class="progress-card">
+                    <div class="progress-title">🇪🇸 Spanish</div>
+                    <div class="progress-circle" data-category="spanish">
+                        <div class="progress-text">0%</div>
+                    </div>
+                    <div style="color: #64748b; font-size: 0.75rem; margin-top: 5px;" id="spanishTaskCount">0/12 tasks</div>
+                </div>
+                <div class="progress-card">
+                    <div class="progress-title">📱 Social</div>
+                    <div class="progress-circle" data-category="social">
+                        <div class="progress-text">0%</div>
+                    </div>
+                    <div style="color: #64748b; font-size: 0.75rem; margin-top: 5px;" id="socialTaskCount">0/8 tasks</div>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number" id="totalTasks">0</div>
+                    <div class="stat-label">Tasks Completed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="currentDay">1</div>
+                    <div class="stat-label">Current Day</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" id="daysLeft">90</div>
+                    <div class="stat-label">Days Left</div>
+                </div>
+            </div>
+            
+            <button class="export-btn" onclick="exportToNotion()">📤 Export Progress to Notion</button>
+        </div>
+
+        <div class="tab-content" id="business">
+            <div class="task-grid">
+                <div class="task-item">
+                    <div class="task-label">🏢 Daily Business Tasks</div>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item" onclick="toggleTask(this, 'business')">
+                            <input type="checkbox"> T-shirt design creation
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'business')">
+                            <input type="checkbox"> Course module work
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'business')">
+                            <input type="checkbox"> Pinterest content
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'business')">
+                            <input type="checkbox"> Store/funnel setup
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="save-btn" onclick="saveProgress('business')">💾 Save Business Progress</button>
+        </div>
+
+        <div class="tab-content" id="health">
+            <div class="task-grid">
+                <div class="task-item">
+                    <div class="task-label">💪 Daily Workouts</div>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item" onclick="toggleTask(this, 'health')">
+                            <input type="checkbox"> Morning workout (30 min)
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'health')">
+                            <input type="checkbox"> Strength training
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'health')">
+                            <input type="checkbox"> Cardio/HIIT
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'health')">
+                            <input type="checkbox"> Yoga/stretching
+                        </div>
+                    </div>
+                </div>
+                <div class="task-item">
+                    <div class="task-label">🍽️ Nutrition Plan</div>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item" onclick="toggleTask(this, 'health')">
+                            <input type="checkbox"> Healthy breakfast
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'health')">
+                            <input type="checkbox"> Nutritious lunch
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'health')">
+                            <input type="checkbox"> Balanced dinner
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'health')">
+                            <input type="checkbox"> Proper hydration
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="save-btn" onclick="saveProgress('health')">💾 Save Health Progress</button>
+        </div>
+
+        <div class="tab-content" id="spanish">
+            <div class="task-grid">
+                <div class="task-item">
+                    <div class="task-label">🇪🇸 Active Learning (1 hour goal)</div>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item" onclick="toggleTask(this, 'spanish')">
+                            <input type="checkbox"> Grammar lessons
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'spanish')">
+                            <input type="checkbox"> Vocabulary practice
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'spanish')">
+                            <input type="checkbox"> Writing exercises
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'spanish')">
+                            <input type="checkbox"> Speaking practice
+                        </div>
+                    </div>
+                </div>
+                <div class="task-item">
+                    <div class="task-label">📺 Passive Learning (1 hour goal)</div>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item" onclick="toggleTask(this, 'spanish')">
+                            <input type="checkbox"> Spanish podcasts
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'spanish')">
+                            <input type="checkbox"> Spanish TV shows
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'spanish')">
+                            <input type="checkbox"> Spanish music
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'spanish')">
+                            <input type="checkbox"> Spanish YouTube
+                        </div>
+                    </div>
+                </div>
+                <div class="task-item">
+                    <div class="task-label">💬 Conversation Practice (1 hour goal)</div>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item" onclick="toggleTask(this, 'spanish')">
+                            <input type="checkbox"> Online conversation
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'spanish')">
+                            <input type="checkbox"> Language exchange
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'spanish')">
+                            <input type="checkbox"> Self-speaking practice
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'spanish')">
+                            <input type="checkbox"> Voice recording
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="save-btn" onclick="saveProgress('spanish')">💾 Save Spanish Progress</button>
+        </div>
+
+        <div class="tab-content" id="social">
+            <div class="task-grid">
+                <div class="task-item">
+                    <div class="task-label">📱 Platform Activity</div>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item" onclick="toggleTask(this, 'social')">
+                            <input type="checkbox"> Pinterest posts (5 pins)
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'social')">
+                            <input type="checkbox"> Instagram story/post
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'social')">
+                            <input type="checkbox"> TikTok video creation
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'social')">
+                            <input type="checkbox"> YouTube planning
+                        </div>
+                    </div>
+                </div>
+                <div class="task-item">
+                    <div class="task-label">📊 Engagement & Growth</div>
+                    <div class="checkbox-group">
+                        <div class="checkbox-item" onclick="toggleTask(this, 'social')">
+                            <input type="checkbox"> Respond to comments
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'social')">
+                            <input type="checkbox"> Engage with others' content
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'social')">
+                            <input type="checkbox"> Check analytics
+                        </div>
+                        <div class="checkbox-item" onclick="toggleTask(this, 'social')">
+                            <input type="checkbox"> Plan tomorrow's content
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="save-btn" onclick="saveProgress('social')">💾 Save Social Progress</button>
+        </div>
+    </div>
+
+    <div class="success-message" id="successMessage">💾 Progress Saved!</div>
+
+    <script>
+        // Simple storage system that works everywhere
+        const storage = {};
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        function updateProgressCircle(element, percentage) {
+            const degrees = (percentage / 100) * 360;
+            element.style.background = `conic-gradient(#4f46e5 ${degrees}deg, #e2e8f0 ${degrees}deg)`;
+            element.querySelector('.progress-text').textContent = `${percentage}%`;
+        }
+
+        function calculateCategoryProgress(category) {
+            const categorySection = document.getElementById(category);
+            if (!categorySection) return 0;
+            
+            const completedTasks = categorySection.querySelectorAll('.checkbox-item.completed').length;
+            const totalTasks = categorySection.querySelectorAll('.checkbox-item').length;
+            
+            return totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+        }
+
+        function updateAllProgressCircles() {
+            ['business', 'health', 'spanish', 'social'].forEach(category => {
+                const progress = calculateCategoryProgress(category);
+                const circle = document.querySelector(`[data-category="${category}"]`);
+                if (circle) {
+                    updateProgressCircle(circle, progress);
+                    
+                    const categorySection = document.getElementById(category);
+                    if (categorySection) {
+                        const completedTasks = categorySection.querySelectorAll('.checkbox-item.completed').length;
+                        const totalTasks = categorySection.querySelectorAll('.checkbox-item').length;
+                        const taskCountElement = document.getElementById(`${category}TaskCount`);
+                        if (taskCountElement) {
+                            taskCountElement.textContent = `${completedTasks}/${totalTasks} tasks`;
+                        }
+                    }
+                }
+            });
+        }
+
+        function getCurrentDayNumber() {
+            const startDate = new Date('2025-08-25');
+            const currentDate = new Date();
+            const daysPassed = Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24));
+            return Math.max(1, Math.min(90, daysPassed + 1));
+        }
+
+        function updateEraProgress() {
+            const currentDay = getCurrentDayNumber();
+            
+            const currentDayDisplay = document.getElementById('currentDayDisplay');
+            if (currentDayDisplay) {
+                currentDayDisplay.textContent = `Day ${currentDay} of 90`;
             }
-        }, 3000);
-    }
-}
+            
+            const eraProgress = document.getElementById('eraProgress');
+            const overallProgress = (currentDay / 90) * 100;
+            if (eraProgress) {
+                eraProgress.style.width = `${overallProgress}%`;
+            }
+            
+            const currentEraName = document.getElementById('currentEraName');
+            if (currentEraName) {
+                if (currentDay <= 15) {
+                    currentEraName.textContent = 'Launch Era';
+                } else if (currentDay <= 40) {
+                    currentEraName.textContent = 'Build-Out Era';
+                } else if (currentDay <= 60) {
+                    currentEraName.textContent = 'Marketing Era';
+                } else {
+                    currentEraName.textContent = 'Maintenance Era';
+                }
+            }
+            
+            const eraProgressText = document.getElementById('eraProgressText');
+            if (eraProgressText) {
+                let eraDay, eraTotalDays;
+                if (currentDay <= 15) {
+                    eraDay = currentDay;
+                    eraTotalDays = 15;
+                } else if (currentDay <= 40) {
+                    eraDay = currentDay - 15;
+                    eraTotalDays = 25;
+                } else if (currentDay <= 60) {
+                    eraDay = currentDay - 40;
+                    eraTotalDays = 20;
+                } else {
+                    eraDay = currentDay - 60;
+                    eraTotalDays = 30;
+                }
+                eraProgressText.textContent = `Day ${eraDay} of ${eraTotalDays}`;
+            }
+            
+            const currentDayElement = document.getElementById('currentDay');
+            if (currentDayElement) {
+                currentDayElement.textContent = currentDay;
+            }
+            
+            const daysLeftElement = document.getElementById('daysLeft');
+            if (daysLeftElement) {
+                daysLeftElement.textContent = Math.max(0, 90 - currentDay + 1);
+            }
+        }
 
-// Initialize Notion integration (add your credentials)
-const notionIntegration = new NotionIntegration(
-    'YOUR_NOTION_TOKEN',    // Get from: https://www.notion.so/my-integrations
-    'YOUR_DATABASE_ID'      // Your Notion database ID
-);
+        function toggleTask(element, category) {
+            const checkbox = element.querySelector('input[type="checkbox"]');
+            if (!checkbox) return;
+            
+            checkbox.checked = !checkbox.checked;
+            
+            if (checkbox.checked) {
+                element.classList.add('completed');
+            } else {
+                element.classList.remove('completed');
+            }
+            
+            updateAllProgressCircles();
+            updateEraProgress();
+            updateStats();
+            showSuccessMessage('Task updated! ✅');
+        }
 
-// Enhanced task toggle with Notion sync
-function toggleTaskWithNotion(element, category) {
-    // Original toggle functionality
-    toggleTask(element, category);
-    
-    // Sync to Notion if integration is set up
-    if (notionIntegration.token && notionIntegration.databaseId) {
-        const taskText = element.textContent.trim();
-        const isCompleted = element.classList.contains('completed');
-        notionIntegration.syncTaskToNotion(taskText, category, isCompleted);
-    }
-}
+        function saveProgress(category) {
+            updateAllProgressCircles();
+            updateEraProgress();
+            updateStats();
+            showSuccessMessage('Progress saved! 💾');
+        }
 
-// Auto-sync button for manual exports
-function addNotionSyncButton() {
-    const syncButton = document.createElement('button');
-    syncButton.textContent = '🔄 Sync to Notion';
-    syncButton.style.cssText = `
-        background: #0369a1;
-        color: white;
-        border: none;
-        padding: 12px 25px;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        font-size: 0.9rem;
-        margin-left: 10px;
-    `;
-    
-    syncButton.onclick = async () => {
-        syncButton.textContent = '⏳ Syncing...';
-        await notionIntegration.exportDailyProgress();
-        syncButton.textContent = '✅ Synced!';
-        setTimeout(() => {
-            syncButton.textContent = '🔄 Sync to Notion';
-        }, 2000);
-    };
-    
-    // Add button next to existing export button
-    const exportButton = document.querySelector('button[onclick="exportToNotion()"]');
-    if (exportButton && exportButton.parentNode) {
-        exportButton.parentNode.insertBefore(syncButton, exportButton.nextSibling);
-    }
-}
+        function updateStats() {
+            let totalTasks = 0;
+            document.querySelectorAll('.checkbox-item.completed').forEach(() => {
+                totalTasks++;
+            });
+            
+            const totalTasksElement = document.getElementById('totalTasks');
+            if (totalTasksElement) {
+                totalTasksElement.textContent = totalTasks;
+            }
+        }
+
+        function showSuccessMessage(message) {
+            const indicator = document.getElementById('successMessage');
+            if (indicator) {
+                indicator.textContent = message;
+                indicator.classList.add('show');
+                setTimeout(() => {
+                    indicator.classList.remove('show');
+                }, 2000);
+            }
+        }
+
+        function exportToNotion() {
+            const completedTasks = [];
+            
+            ['business', 'health', 'spanish', 'social'].forEach(category => {
+                const progress = calculateCategoryProgress(category);
+                const categorySection = document.getElementById(category);
+                
+                if (categorySection) {
+                    categorySection.querySelectorAll('.checkbox-item.completed').forEach(element => {
+                        const taskText = element.textContent.trim();
+                        completedTasks.push({
+                            task: taskText,
+                            category: category.toUpperCase()
+                        });
+                    });
+                }
+            });
+            
+            const currentDay = getCurrentDayNumber();
+            const progressSummary = {
+                business: calculateCategoryProgress('business'),
+                health: calculateCategoryProgress('health'),
+                spanish: calculateCategoryProgress('spanish'),
+                social: calculateCategoryProgress('social')
+            };
+            
+            const notionText = `## 📊 90-Day Launch Progress Export
+**Export Date:** ${new Date().toLocaleDateString()}
+**Launch Day:** ${currentDay} of 90
+
+### 📈 Progress Summary
+- 🏢 **Business:** ${progressSummary.business}%
+- 💪 **Health:** ${progressSummary.health}%
+- 🇪🇸 **Spanish:** ${progressSummary.spanish}%
+- 📱 **Social:** ${progressSummary.social}%
+
+### ✅ Completed Tasks (${completedTasks.length})
+${completedTasks.map(task => `- **${task.category}:** ${task.task}`).join('\n')}
+
+### 📋 Next Steps
+- Continue daily tracking
+- Review progress weekly
+- Adjust goals as needed
+
+---
+*Exported from 90-Day Launch Dashboard*`;
+            
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(notionText).then(() => {
+                    showSuccessMessage('📋 Progress copied to clipboard! Paste into Notion.');
+                }).catch(() => {
+                    alert('Export Text:\n\n' + notionText);
+                });
+            } else {
+                alert('Export Text:\n\n' + notionText);
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateEraProgress();
+            updateAllProgressCircles();
+            updateStats();
+            console.log('🚀 90-Day Launch Dashboard loaded successfully!');
+        });
+    </script>
+</body>
+</html>
