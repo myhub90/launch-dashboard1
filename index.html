@@ -4,6 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>90-Day Launch Dashboard</title>
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/json,{%22name%22:%2290-Day%20Launch%20Dashboard%22,%22short_name%22:%22Launch%20Hub%22,%22description%22:%22Your%2090-day%20business%20launch%20tracking%20dashboard%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22background_color%22:%22%23667eea%22,%22theme_color%22:%22%234f46e5%22,%22icons%22:[{%22src%22:%22data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDI0MCAyNDAiIGZpbGw9IiM0ZjQ2ZTUiPgo8Y2lyY2xlIGN4PSIxMjAiIGN5PSIxMjAiIHI9IjEwMCIvPgo8dGV4dCB4PSIxMjAiIHk9IjEzNSIgZm9udC1zaXplPSI0OCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfmoE8L3RleHQ+Cjwvc3ZnPg==%22,%22sizes%22:%22240x240%22,%22type%22:%22image/svg+xml%22}]}">
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Launch Hub">
+    
+    <!-- Google Calendar Integration -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
+    
     <style>
         * {
             margin: 0;
@@ -16,6 +30,8 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 10px;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .container {
@@ -45,6 +61,7 @@
             display: flex;
             background: #f8fafc;
             overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .tab {
@@ -65,6 +82,10 @@
             color: #4f46e5;
         }
 
+        .tab:active {
+            background: #e2e8f0;
+        }
+
         .tab-content {
             display: none;
             padding: 20px;
@@ -75,6 +96,7 @@
             display: block;
         }
 
+        /* Progress Styles */
         .progress-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -88,6 +110,13 @@
             border-radius: 12px;
             padding: 15px;
             text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .progress-card:active {
+            transform: scale(0.95);
+            background: #e2e8f0;
         }
 
         .progress-circle {
@@ -100,6 +129,7 @@
             justify-content: center;
             margin: 0 auto 10px;
             position: relative;
+            transition: all 0.5s ease;
         }
 
         .progress-circle::before {
@@ -126,6 +156,116 @@
             margin-bottom: 10px;
         }
 
+        /* Calendar Styles */
+        .calendar-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .calendar-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .calendar-subtitle {
+            color: #64748b;
+            margin-bottom: 20px;
+        }
+
+        .era-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .era-card {
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.8rem;
+        }
+
+        .era-launch { background: #fef2f2; color: #dc2626; }
+        .era-buildout { background: #fffbeb; color: #d97706; }
+        .era-marketing { background: #ecfdf5; color: #059669; }
+        .era-maintenance { background: #f3e8ff; color: #7c3aed; }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+            margin-bottom: 20px;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            font-weight: 600;
+            color: #64748b;
+            padding: 8px;
+            font-size: 0.75rem;
+        }
+
+        .calendar-day {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px;
+            min-height: 60px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .calendar-day:active {
+            transform: scale(0.95);
+        }
+
+        .calendar-day.launch { border-left: 4px solid #ef4444; background: #fef2f2; }
+        .calendar-day.buildout { border-left: 4px solid #f59e0b; background: #fffbeb; }
+        .calendar-day.marketing { border-left: 4px solid #10b981; background: #ecfdf5; }
+        .calendar-day.maintenance { border-left: 4px solid #8b5cf6; background: #f3e8ff; }
+
+        .day-number {
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 3px;
+            font-size: 0.85rem;
+        }
+
+        .day-date {
+            font-size: 0.65rem;
+            color: #64748b;
+        }
+
+        .task-indicator {
+            width: 6px;
+            height: 6px;
+            background: #10b981;
+            border-radius: 50%;
+            position: absolute;
+            top: 4px;
+            right: 4px;
+        }
+
+        .google-indicator {
+            width: 6px;
+            height: 6px;
+            background: #ea4335;
+            border-radius: 50%;
+            position: absolute;
+            top: 4px;
+            left: 4px;
+        }
+
+        /* Task Styles */
         .task-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -166,6 +306,10 @@
             transition: all 0.3s ease;
         }
 
+        .checkbox-item:active {
+            transform: scale(0.98);
+        }
+
         .checkbox-item.completed {
             background: #dcfce7;
             border-color: #16a34a;
@@ -176,6 +320,91 @@
             width: 16px;
             height: 16px;
             margin: 0;
+            accent-color: #4f46e5;
+        }
+
+        /* Tools Styles */
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .tool-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            border-color: #4f46e5;
+        }
+
+        .tool-card.completed {
+            border-color: #10b981;
+            background: #f0fdf4;
+        }
+
+        .tool-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .tool-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+
+        .tool-category {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .tool-status {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+        }
+
+        .tool-status.completed {
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+
+        .tool-description {
+            color: #64748b;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: 15px;
+        }
+
+        .tool-era {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
         }
 
         .save-btn {
@@ -188,89 +417,15 @@
             cursor: pointer;
             width: 100%;
             font-size: 0.9rem;
+            transition: all 0.3s ease;
         }
 
-        .era-timeline {
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 100%);
-            border-radius: 12px;
-            border-left: 4px solid #4f46e5;
-            padding: 20px;
-            margin-bottom: 30px;
+        .save-btn:active {
+            background: #4338ca;
+            transform: scale(0.98);
         }
 
-        .era-progress-bar {
-            height: 40px;
-            background: #e2e8f0;
-            border-radius: 20px;
-            overflow: hidden;
-            margin: 15px 0;
-            position: relative;
-        }
-
-        .era-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #ef4444 0%, #f59e0b 25%, #10b981 50%, #8b5cf6 75%);
-            border-radius: 20px;
-            width: 1.11%;
-            transition: width 0.5s ease;
-        }
-
-        .era-labels {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 10px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            color: #64748b;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-top: 30px;
-        }
-
-        .stat-card {
-            background: white;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #4f46e5;
-            margin-bottom: 5px;
-        }
-
-        .stat-label {
-            color: #64748b;
-            font-size: 0.8rem;
-        }
-        
-        .export-btn {
-            background: #10b981;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 0.9rem;
-            margin: 10px 0;
-            width: 100%;
-        }
-        
-        .success-message {
+        .save-indicator {
             position: fixed;
             top: 20px;
             left: 50%;
@@ -286,8 +441,265 @@
             font-size: 0.85rem;
         }
 
-        .success-message.show {
+        .save-indicator.show {
             opacity: 1;
+        }
+
+        /* Era Timeline Styles */
+        #eraTimeline {
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        #eraProgress {
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            max-width: 600px;
+            margin: 30px auto;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 15px;
+            margin-right: 40px;
+        }
+
+        .modal-era {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            margin-bottom: 20px;
+        }
+
+        .schedule-section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 12px;
+        }
+
+        .schedule-item {
+            display: flex;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: #f8fafc;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        .schedule-time {
+            font-weight: 600;
+            color: #4f46e5;
+            min-width: 70px;
+        }
+
+        .tool-filter.active {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .streak-counter {
+            background: #f0f9ff;
+            border: 2px solid #0369a1;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .streak-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0369a1;
+            margin-bottom: 5px;
+        }
+
+        .streak-text {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        .sync-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4f46e5;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .sync-status.show {
+            opacity: 1;
+        }
+
+        .sync-status.success {
+            background: #10b981;
+        }
+
+        .sync-status.error {
+            background: #ef4444;
+        }
+
+        .google-cal-btn {
+            background: #ea4335;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin: 10px 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .google-cal-btn:hover {
+            background: #d33b2c;
+            transform: translateY(-2px);
+        }
+
+        .calendar-sync-panel {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .sync-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .sync-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #64748b;
+            margin-right: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sync-indicator.connected {
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        .sync-indicator.syncing {
+            background: #f59e0b;
+            animation: spin 1s linear infinite;
+        }
+
+        .sync-indicator.error {
+            background: #ef4444;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .era-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .calendar-grid {
+                gap: 4px;
+            }
+            
+            .calendar-day {
+                min-height: 50px;
+                padding: 6px;
+            }
+            
+            .day-number {
+                font-size: 0.75rem;
+            }
+            
+            .day-date {
+                font-size: 0.6rem;
+            }
+            
+            .modal {
+                padding: 10px;
+            }
+            
+            .modal-content {
+                margin: 20px auto;
+                padding: 20px;
+            }
+            
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tool-card {
+                padding: 15px;
+            }
         }
     </style>
 </head>
@@ -295,29 +707,40 @@
     <div class="container">
         <div class="header">
             <h1>🚀 90-Day Launch Hub</h1>
-            <div>Launch begins August 25th, 2025</div>
+            <div id="countdown">Launch begins August 25th, 2025</div>
         </div>
 
         <div class="tabs">
             <div class="tab active" onclick="showTab('overview')">📊 Overview</div>
+            <div class="tab" onclick="showTab('calendar')">📅 Calendar</div>
+            <div class="tab" onclick="showTab('tools')">🛠️ Tools</div>
             <div class="tab" onclick="showTab('business')">🏢 Business</div>
             <div class="tab" onclick="showTab('health')">💪 Health</div>
             <div class="tab" onclick="showTab('spanish')">🇪🇸 Spanish</div>
             <div class="tab" onclick="showTab('social')">📱 Social</div>
         </div>
 
+        <!-- Overview Tab -->
         <div class="tab-content active" id="overview">
             <h3 style="text-align: center; margin-bottom: 20px; color: #1e293b;">Progress Overview</h3>
             
-            <div class="era-timeline">
+            <!-- Streak Counter -->
+            <div class="streak-counter">
+                <div class="streak-number" id="streakNumber">0</div>
+                <div class="streak-text">Day Streak 🔥</div>
+            </div>
+            
+            <!-- Era Progression Timeline -->
+            <div style="margin-bottom: 30px; padding: 20px; background: linear-gradient(135deg, #f0f9ff 0%, #e0e7ff 100%); border-radius: 12px; border-left: 4px solid #4f46e5;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <div style="font-weight: 700; color: #1e293b; font-size: 1.1rem;">🎯 90-Day Journey Progress</div>
                     <div id="currentDayDisplay" style="font-weight: 600; color: #4f46e5;">Day 1 of 90</div>
                 </div>
                 
-                <div class="era-progress-bar">
-                    <div class="era-fill" id="eraProgress"></div>
-                    <div class="era-labels">
+                <!-- Era Timeline -->
+                <div id="eraTimeline" style="position: relative; height: 40px; background: #e2e8f0; border-radius: 20px; overflow: hidden; margin-bottom: 15px;">
+                    <div id="eraProgress" style="height: 100%; background: linear-gradient(90deg, #ef4444 0%, #f59e0b 25%, #10b981 50%, #8b5cf6 75%); border-radius: 20px; width: 1.11%; transition: width 0.5s ease;"></div>
+                    <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 0.7rem; font-weight: 600; color: #64748b;">
                         <span>Launch</span>
                         <span>Build-Out</span>
                         <span>Marketing</span>
@@ -325,6 +748,7 @@
                     </div>
                 </div>
                 
+                <!-- Current Era Info -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; font-size: 0.85rem;">
                     <div style="text-align: center;">
                         <div style="color: #64748b;">Current Era</div>
@@ -340,52 +764,190 @@
             <div class="progress-grid">
                 <div class="progress-card">
                     <div class="progress-title">🏢 Business</div>
-                    <div class="progress-circle" data-category="business">
+                    <div class="progress-circle" data-progress="0" data-category="business">
                         <div class="progress-text">0%</div>
                     </div>
                     <div style="color: #64748b; font-size: 0.75rem; margin-top: 5px;" id="businessTaskCount">0/4 tasks</div>
                 </div>
                 <div class="progress-card">
                     <div class="progress-title">💪 Health</div>
-                    <div class="progress-circle" data-category="health">
+                    <div class="progress-circle" data-progress="0" data-category="health">
                         <div class="progress-text">0%</div>
                     </div>
                     <div style="color: #64748b; font-size: 0.75rem; margin-top: 5px;" id="healthTaskCount">0/8 tasks</div>
                 </div>
                 <div class="progress-card">
                     <div class="progress-title">🇪🇸 Spanish</div>
-                    <div class="progress-circle" data-category="spanish">
+                    <div class="progress-circle" data-progress="0" data-category="spanish">
                         <div class="progress-text">0%</div>
                     </div>
                     <div style="color: #64748b; font-size: 0.75rem; margin-top: 5px;" id="spanishTaskCount">0/12 tasks</div>
                 </div>
                 <div class="progress-card">
                     <div class="progress-title">📱 Social</div>
-                    <div class="progress-circle" data-category="social">
+                    <div class="progress-circle" data-progress="0" data-category="social">
                         <div class="progress-text">0%</div>
                     </div>
                     <div style="color: #64748b; font-size: 0.75rem; margin-top: 5px;" id="socialTaskCount">0/8 tasks</div>
                 </div>
             </div>
 
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-number" id="totalTasks">0</div>
-                    <div class="stat-label">Tasks Completed</div>
+            <div style="text-align: center; margin-top: 30px;">
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                    <div style="background: white; border: 2px solid #e2e8f0; border-radius: 10px; padding: 15px; text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #4f46e5; margin-bottom: 5px;" id="totalTasks">0</div>
+                        <div style="color: #64748b; font-size: 0.8rem;">Tasks Completed</div>
+                    </div>
+                    <div style="background: white; border: 2px solid #e2e8f0; border-radius: 10px; padding: 15px; text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #4f46e5; margin-bottom: 5px;" id="currentDay">1</div>
+                        <div style="color: #64748b; font-size: 0.8rem;">Current Day</div>
+                    </div>
+                    <div style="background: white; border: 2px solid #e2e8f0; border-radius: 10px; padding: 15px; text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: 700; color: #4f46e5; margin-bottom: 5px;" id="daysLeft">90</div>
+                        <div style="color: #64748b; font-size: 0.8rem;">Days Left</div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="currentDay">1</div>
-                    <div class="stat-label">Current Day</div>
+                
+                <!-- Helpful tip about undoing tasks -->
+                <div style="margin-top: 20px; padding: 15px; background: #f0f9ff; border: 2px solid #bae6fd; border-radius: 10px; text-align: left;">
+                    <div style="font-weight: 600; color: #0369a1; margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                        <span>💡</span>
+                        <span>Pro Tip: Flexible Progress Tracking</span>
+                    </div>
+                    <div style="color: #0c4a6e; font-size: 0.85rem; line-height: 1.4;">
+                        <strong>You can undo any task!</strong> Simply click any completed checkbox to uncheck it. All metrics update instantly:
+                        <ul style="margin: 8px 0 0 20px; padding: 0;">
+                            <li>✅ Progress circles recalculate automatically</li>
+                            <li>📊 Era timeline adjusts in real-time</li>
+                            <li>🔥 Streak counter updates</li>
+                            <li>📈 All stats refresh immediately</li>
+                            <li>📅 Google Calendar syncs changes automatically</li>
+                        </ul>
+                        Perfect for fixing mistakes or adjusting your progress!
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number" id="daysLeft">90</div>
-                    <div class="stat-label">Days Left</div>
+            </div>
+        </div>
+
+        <!-- Calendar Tab -->
+        <div class="tab-content" id="calendar">
+            <div class="calendar-header">
+                <div class="calendar-title">📅 Interactive 90-Day Calendar</div>
+                <div class="calendar-subtitle">Tap any day to see detailed schedule</div>
+                
+                <!-- Google Calendar Sync Panel -->
+                <div class="calendar-sync-panel">
+                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                        <div class="sync-indicator" id="syncIndicator"></div>
+                        <div style="font-weight: 600; color: #1e293b;">Google Calendar Integration</div>
+                    </div>
+                    <div style="color: #64748b; font-size: 0.85rem; margin-bottom: 15px;" id="syncStatus">
+                        Setting up Google Calendar integration...
+                    </div>
+                    
+                    <div class="sync-controls">
+                        <button class="google-cal-btn" id="connectBtn" onclick="connectGoogleCalendar()">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                            </svg>
+                            Connect Google Calendar
+                        </button>
+                        
+                        <button class="google-cal-btn" id="syncBtn" onclick="syncWithGoogleCalendar()" style="display: none; background: #10b981;">
+                            🔄 Sync Now
+                        </button>
+                        
+                        <button class="google-cal-btn" id="disconnectBtn" onclick="disconnectGoogleCalendar()" style="display: none; background: #64748b;">
+                            🔌 Disconnect
+                        </button>
+                    </div>
+                    
+                    <div style="margin-top: 10px; font-size: 0.75rem; color: #64748b;" id="lastSyncTime">
+                        Never synced
+                    </div>
+                </div>
+                
+                <div class="era-grid">
+                    <div class="era-card era-launch">
+                        <div style="font-weight: 700; margin-bottom: 3px;">Launch Era</div>
+                        <div>Days 1-15</div>
+                    </div>
+                    <div class="era-card era-buildout">
+                        <div style="font-weight: 700; margin-bottom: 3px;">Build-Out Era</div>
+                        <div>Days 16-40</div>
+                    </div>
+                    <div class="era-card era-marketing">
+                        <div style="font-weight: 700; margin-bottom: 3px;">Marketing Era</div>
+                        <div>Days 41-60</div>
+                    </div>
+                    <div class="era-card era-maintenance">
+                        <div style="font-weight: 700; margin-bottom: 3px;">Maintenance Era</div>
+                        <div>Days 61-90</div>
+                    </div>
                 </div>
             </div>
             
-            <button class="export-btn" onclick="exportToNotion()">📤 Export Progress to Notion</button>
+            <div class="calendar-grid" id="calendarGrid">
+                <!-- Calendar will be generated by JavaScript -->
+            </div>
         </div>
 
+        <!-- Tools Tab -->
+        <div class="tab-content" id="tools">
+            <div class="calendar-header">
+                <div class="calendar-title">🛠️ Tools & Setup Guide</div>
+                <div class="calendar-subtitle">Step-by-step instructions organized by era and task</div>
+            </div>
+
+            <div class="era-grid" style="margin-bottom: 25px;">
+                <div class="era-card era-launch tool-filter active" data-era="launch" onclick="filterTools('launch')">
+                    <div style="font-weight: 700; margin-bottom: 3px;">Launch Era</div>
+                    <div style="font-size: 0.7rem;">Foundation & Setup</div>
+                </div>
+                <div class="era-card era-buildout tool-filter" data-era="buildout" onclick="filterTools('buildout')">
+                    <div style="font-weight: 700; margin-bottom: 3px;">Build-Out Era</div>
+                    <div style="font-size: 0.7rem;">Course Creation</div>
+                </div>
+                <div class="era-card era-marketing tool-filter" data-era="marketing" onclick="filterTools('marketing')">
+                    <div style="font-weight: 700; margin-bottom: 3px;">Marketing Era</div>
+                    <div style="font-size: 0.7rem;">Automation & Funnels</div>
+                </div>
+                <div class="era-card era-maintenance tool-filter" data-era="maintenance" onclick="filterTools('maintenance')">
+                    <div style="font-weight: 700; margin-bottom: 3px;">Maintenance Era</div>
+                    <div style="font-size: 0.7rem;">Optimization</div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px; text-align: center; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+                <button onclick="showAddToolModal()" style="background: #10b981; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
+                    + Add Custom Tool
+                </button>
+                <button onclick="exportToNotion()" style="background: #4f46e5; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
+                    📤 Export to Notion
+                </button>
+                <button onclick="backupData()" style="background: #f59e0b; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem;">
+                    💾 Backup Data
+                </button>
+                <button onclick="googleCalendar.showSetupInstructions()" style="background: #ea4335; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; gap: 8px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    📅 Calendar Integration Setup
+                </button>
+            </div>
+
+            <div id="toolsContainer">
+                <!-- Tools will be loaded by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Business Tab -->
         <div class="tab-content" id="business">
             <div class="task-grid">
                 <div class="task-item">
@@ -409,6 +971,7 @@
             <button class="save-btn" onclick="saveProgress('business')">💾 Save Business Progress</button>
         </div>
 
+        <!-- Health Tab -->
         <div class="tab-content" id="health">
             <div class="task-grid">
                 <div class="task-item">
@@ -449,6 +1012,7 @@
             <button class="save-btn" onclick="saveProgress('health')">💾 Save Health Progress</button>
         </div>
 
+        <!-- Spanish Tab -->
         <div class="tab-content" id="spanish">
             <div class="task-grid">
                 <div class="task-item">
@@ -506,6 +1070,7 @@
             <button class="save-btn" onclick="saveProgress('spanish')">💾 Save Spanish Progress</button>
         </div>
 
+        <!-- Social Tab -->
         <div class="tab-content" id="social">
             <div class="task-grid">
                 <div class="task-item">
@@ -547,12 +1112,905 @@
         </div>
     </div>
 
-    <div class="success-message" id="successMessage">💾 Progress Saved!</div>
+    <!-- Day Detail Modal -->
+    <div id="dayModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeDayModal()">×</button>
+            <div class="modal-title" id="modalTitle">Day 1 - August 25th</div>
+            <div class="modal-era era-launch" id="modalEra">Launch Era</div>
+            <div id="modalContent">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Tool Detail Modal -->
+    <div id="toolModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeToolModal()">×</button>
+            <div class="modal-title" id="toolModalTitle">Tool Setup Guide</div>
+            <div id="toolModalContent">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Tool Modal -->
+    <div id="addToolModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeAddToolModal()">×</button>
+            <div class="modal-title">Add Custom Tool</div>
+            <div style="display: grid; gap: 15px;">
+                <input type="text" id="toolName" placeholder="Tool name..." style="padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px;">
+                <textarea id="toolDescription" placeholder="Tool description..." style="padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; min-height: 80px;"></textarea>
+                <select id="toolEra" style="padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px;">
+                    <option value="launch">Launch Era</option>
+                    <option value="buildout">Build-Out Era</option>
+                    <option value="marketing">Marketing Era</option>
+                    <option value="maintenance">Maintenance Era</option>
+                </select>
+                <button onclick="saveCustomTool()" style="background: #10b981; color: white; border: none; padding: 12px; border-radius: 6px; font-weight: 600;">Add Tool</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="save-indicator" id="saveIndicator">💾 Data Saved!</div>
 
     <script>
-        // Simple storage system that works everywhere
-        const storage = {};
+        // Data Storage Class - Using memory storage for Claude.ai compatibility
+        class AppData {
+            constructor() {
+                this.storage = {};
+            }
 
+            getCurrentDate() {
+                return new Date().toISOString().split('T')[0];
+            }
+
+            save(key, value) {
+                try {
+                    const today = this.getCurrentDate();
+                    if (!this.storage[today]) {
+                        this.storage[today] = {};
+                    }
+                    this.storage[today][key] = value;
+                    this.storage[today]['lastUpdated'] = new Date().toISOString();
+                    this.showSaveIndicator();
+                    return true;
+                } catch (e) {
+                    console.error('Save failed:', e);
+                    return false;
+                }
+            }
+
+            load(key) {
+                try {
+                    const today = this.getCurrentDate();
+                    return this.storage[today] ? this.storage[today][key] : null;
+                } catch (e) {
+                    return null;
+                }
+            }
+
+            showSaveIndicator() {
+                const indicator = document.getElementById('saveIndicator');
+                if (indicator) {
+                    indicator.classList.add('show');
+                    setTimeout(() => {
+                        indicator.classList.remove('show');
+                    }, 2000);
+                }
+            }
+        }
+
+        const appData = new AppData();
+
+        // Google Calendar Integration with Full Bidirectional Sync
+        class GoogleCalendarIntegration {
+            constructor() {
+                this.isSignedIn = false;
+                this.gapi = null;
+                this.auth2 = null;
+                this.calendarId = 'primary';
+                this.clientId = 'YOUR_GOOGLE_CLIENT_ID'; // User needs to replace this
+                this.apiKey = 'YOUR_GOOGLE_API_KEY'; // User needs to replace this
+                this.scope = 'https://www.googleapis.com/auth/calendar';
+                this.lastSyncTime = null;
+                this.autoSyncInterval = null;
+                this.hasCredentials = false;
+                this.syncEventPrefix = '🚀 Launch Dashboard: ';
+            }
+
+            async initialize() {
+                try {
+                    console.log('🔄 Initializing Google Calendar integration...');
+                    
+                    // Check if user has set up credentials
+                    if (this.clientId === 'YOUR_GOOGLE_CLIENT_ID' || this.apiKey === 'YOUR_GOOGLE_API_KEY') {
+                        this.updateSyncStatus('Setup required - click Calendar Integration Setup button', 'disconnected');
+                        return false;
+                    }
+                    
+                    this.hasCredentials = true;
+                    
+                    // Load Google API
+                    if (typeof gapi !== 'undefined') {
+                        await this.loadGoogleAPI();
+                        this.updateSyncStatus('Ready to connect', 'disconnected');
+                        return true;
+                    } else {
+                        this.updateSyncStatus('Google API loading...', 'disconnected');
+                        // Wait for gapi to load from CDN
+                        await this.waitForGapi();
+                        await this.loadGoogleAPI();
+                        this.updateSyncStatus('Ready to connect', 'disconnected');
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Google Calendar initialization failed:', error);
+                    this.updateSyncStatus('Setup required - see instructions', 'error');
+                    return false;
+                }
+            }
+
+            async waitForGapi() {
+                return new Promise((resolve, reject) => {
+                    let attempts = 0;
+                    const checkGapi = () => {
+                        if (typeof gapi !== 'undefined') {
+                            resolve();
+                        } else if (attempts < 50) { // 5 seconds total
+                            attempts++;
+                            setTimeout(checkGapi, 100);
+                        } else {
+                            reject(new Error('Google API failed to load'));
+                        }
+                    };
+                    checkGapi();
+                });
+            }
+
+            async loadGoogleAPI() {
+                return new Promise((resolve, reject) => {
+                    gapi.load('client:auth2', async () => {
+                        try {
+                            await gapi.client.init({
+                                apiKey: this.apiKey,
+                                clientId: this.clientId,
+                                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
+                                scope: this.scope
+                            });
+                            
+                            this.auth2 = gapi.auth2.getAuthInstance();
+                            this.gapi = gapi;
+                            
+                            // Check if already signed in
+                            if (this.auth2.isSignedIn.get()) {
+                                this.isSignedIn = true;
+                                this.updateSyncStatus('Connected to Google Calendar', 'connected');
+                                this.updateUIForConnectedState();
+                                this.startAutoSync();
+                            }
+                            
+                            resolve();
+                        } catch (error) {
+                            reject(error);
+                        }
+                    });
+                });
+            }
+
+            async connect() {
+                try {
+                    if (!this.hasCredentials) {
+                        this.showSetupInstructions();
+                        return;
+                    }
+
+                    this.updateSyncStatus('Connecting...', 'syncing');
+                    
+                    // Initiate Google OAuth flow
+                    const authInstance = this.auth2;
+                    const user = await authInstance.signIn();
+                    
+                    if (user.isSignedIn()) {
+                        this.isSignedIn = true;
+                        this.updateSyncStatus('Connected to Google Calendar', 'connected');
+                        this.updateUIForConnectedState();
+                        this.showSyncNotification('✅ Connected to Google Calendar!', 'success');
+                        
+                        // Initial sync
+                        await this.performBidirectionalSync();
+                        
+                        // Start automatic sync
+                        this.startAutoSync();
+                    } else {
+                        throw new Error('Sign-in failed');
+                    }
+                    
+                } catch (error) {
+                    console.error('Google Calendar connection failed:', error);
+                    this.updateSyncStatus('Connection failed', 'error');
+                    this.showSyncNotification('❌ Connection failed. Check setup.', 'error');
+                }
+            }
+
+            async disconnect() {
+                try {
+                    if (this.auth2 && this.isSignedIn) {
+                        await this.auth2.signOut();
+                    }
+                    
+                    this.isSignedIn = false;
+                    this.stopAutoSync();
+                    this.updateSyncStatus('Disconnected', 'disconnected');
+                    this.updateUIForDisconnectedState();
+                    this.showSyncNotification('🔌 Disconnected from Google Calendar', 'success');
+                } catch (error) {
+                    console.error('Disconnect failed:', error);
+                }
+            }
+
+            async performBidirectionalSync() {
+                if (!this.isSignedIn) {
+                    this.showSyncNotification('❌ Not connected to Google Calendar', 'error');
+                    return;
+                }
+
+                try {
+                    this.updateSyncStatus('Syncing with Google Calendar...', 'syncing');
+                    
+                    // Step 1: Get events from Google Calendar
+                    const googleEvents = await this.fetchGoogleCalendarEvents();
+                    
+                    // Step 2: Import Google events to PWA
+                    this.importGoogleEventsToPWA(googleEvents);
+                    
+                    // Step 3: Export PWA tasks to Google Calendar
+                    await this.exportPWATasksToGoogle();
+                    
+                    this.lastSyncTime = new Date();
+                    this.updateSyncStatus('Synced with Google Calendar', 'connected');
+                    this.updateLastSyncDisplay();
+                    this.showSyncNotification('✅ Bidirectional sync complete!', 'success');
+                    
+                    // Update calendar display
+                    this.updateCalendarWithSyncedData();
+                    
+                } catch (error) {
+                    console.error('Bidirectional sync failed:', error);
+                    this.updateSyncStatus('Sync failed', 'error');
+                    this.showSyncNotification('❌ Sync failed. Try again.', 'error');
+                }
+            }
+
+            async fetchGoogleCalendarEvents() {
+                const startDate = new Date('2025-08-25');
+                const endDate = new Date(startDate);
+                endDate.setDate(startDate.getDate() + 90);
+                
+                const response = await gapi.client.calendar.events.list({
+                    calendarId: this.calendarId,
+                    timeMin: startDate.toISOString(),
+                    timeMax: endDate.toISOString(),
+                    singleEvents: true,
+                    orderBy: 'startTime',
+                    maxResults: 1000
+                });
+                
+                return response.result.items || [];
+            }
+
+            importGoogleEventsToPWA(googleEvents) {
+                const startDate = new Date('2025-08-25');
+                
+                googleEvents.forEach(event => {
+                    // Skip all-day events or events without specific times
+                    if (!event.start || !event.start.dateTime) return;
+                    
+                    // Skip events we created (to avoid duplicates)
+                    if (event.summary && event.summary.includes(this.syncEventPrefix)) {
+                        return;
+                    }
+                    
+                    const eventDate = new Date(event.start.dateTime);
+                    const daysDiff = Math.floor((eventDate - startDate) / (1000 * 60 * 60 * 24));
+                    const dayNumber = daysDiff + 1;
+                    
+                    // Only import events within our 90-day range
+                    if (dayNumber >= 1 && dayNumber <= 90) {
+                        const importedTask = {
+                            id: 'google_' + event.id,
+                            text: `📅 ${event.summary || 'Google Calendar Event'}`,
+                            time: eventDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+                            type: 'other',
+                            completed: false,
+                            source: 'google',
+                            googleEventId: event.id
+                        };
+                        
+                        const existingTasks = JSON.parse(appData.load(`custom-tasks-day-${dayNumber}`) || '[]');
+                        
+                        // Check if this Google event is already imported
+                        const alreadyExists = existingTasks.some(task => task.googleEventId === event.id);
+                        
+                        if (!alreadyExists) {
+                            existingTasks.push(importedTask);
+                            appData.save(`custom-tasks-day-${dayNumber}`, JSON.stringify(existingTasks));
+                            console.log(`📥 Imported from Google: ${event.summary} on Day ${dayNumber}`);
+                        }
+                    }
+                });
+            }
+
+            async exportPWATasksToGoogle() {
+                const startDate = new Date('2025-08-25');
+                const eventsCreated = [];
+                
+                // Export custom tasks from all days
+                for (let day = 1; day <= 90; day++) {
+                    const customTasks = JSON.parse(appData.load(`custom-tasks-day-${day}`) || '[]');
+                    
+                    for (const task of customTasks) {
+                        // Skip tasks that came from Google Calendar
+                        if (task.source === 'google') continue;
+                        
+                        // Skip if already exported (check if we have a googleEventId)
+                        if (task.googleEventId) continue;
+                        
+                        const eventDate = new Date(startDate);
+                        eventDate.setDate(startDate.getDate() + day - 1);
+                        
+                        if (task.time) {
+                            const [hours, minutes] = task.time.split(':');
+                            eventDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+                        } else {
+                            eventDate.setHours(9, 0, 0, 0); // Default to 9 AM
+                        }
+
+                        const event = {
+                            summary: `${this.syncEventPrefix}${task.text}`,
+                            description: `90-Day Launch - ${task.type.toUpperCase()} task from PWA Dashboard`,
+                            start: {
+                                dateTime: eventDate.toISOString(),
+                                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                            },
+                            end: {
+                                dateTime: new Date(eventDate.getTime() + 30 * 60000).toISOString(), // 30 min duration
+                                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                            },
+                            colorId: this.getColorForTaskType(task.type),
+                            source: {
+                                title: '90-Day Launch Dashboard',
+                                url: window.location.href
+                            }
+                        };
+
+                        try {
+                            const response = await gapi.client.calendar.events.insert({
+                                calendarId: this.calendarId,
+                                resource: event
+                            });
+                            
+                            // Update the task with the Google Event ID
+                            task.googleEventId = response.result.id;
+                            
+                            // Save the updated task list
+                            const updatedTasks = JSON.parse(appData.load(`custom-tasks-day-${day}`) || '[]');
+                            const taskIndex = updatedTasks.findIndex(t => t.id === task.id);
+                            if (taskIndex !== -1) {
+                                updatedTasks[taskIndex] = task;
+                                appData.save(`custom-tasks-day-${day}`, JSON.stringify(updatedTasks));
+                            }
+                            
+                            eventsCreated.push(task.text);
+                            console.log(`📤 Exported to Google: ${task.text} on Day ${day}`);
+                        } catch (error) {
+                            console.error(`Failed to export task: ${task.text}`, error);
+                        }
+                    }
+                }
+                
+                // Export milestone events
+                await this.exportMilestoneEvents();
+                
+                if (eventsCreated.length > 0) {
+                    console.log(`✅ Exported ${eventsCreated.length} events to Google Calendar`);
+                }
+            }
+
+            async exportMilestoneEvents() {
+                const startDate = new Date('2025-08-25');
+                const milestones = [
+                    { day: 1, title: 'Launch Day - Foundation Setup', color: '11' },
+                    { day: 16, title: 'Build-Out Era Begins', color: '6' },
+                    { day: 41, title: 'Marketing Era Begins', color: '10' },
+                    { day: 61, title: 'Maintenance Era Begins', color: '9' },
+                    { day: 90, title: 'Launch Complete! 🎉', color: '4' }
+                ];
+
+                for (const milestone of milestones) {
+                    const eventDate = new Date(startDate);
+                    eventDate.setDate(startDate.getDate() + milestone.day - 1);
+                    eventDate.setHours(9, 0, 0, 0); // 9 AM
+
+                    const event = {
+                        summary: `🎯 ${milestone.title}`,
+                        description: '90-Day Launch Milestone - Major checkpoint in your journey!',
+                        start: {
+                            dateTime: eventDate.toISOString(),
+                            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                        },
+                        end: {
+                            dateTime: new Date(eventDate.getTime() + 60 * 60000).toISOString(), // 1 hour
+                            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                        },
+                        colorId: milestone.color
+                    };
+
+                    try {
+                        // Check if milestone already exists
+                        const existingMilestone = appData.load(`milestone-${milestone.day}-exported`);
+                        if (existingMilestone) continue;
+
+                        const response = await gapi.client.calendar.events.insert({
+                            calendarId: this.calendarId,
+                            resource: event
+                        });
+                        
+                        appData.save(`milestone-${milestone.day}-exported`, response.result.id);
+                        console.log(`🎯 Exported milestone: ${milestone.title}`);
+                    } catch (error) {
+                        console.error(`Failed to export milestone: ${milestone.title}`, error);
+                    }
+                }
+            }
+
+            async syncTaskCompletionToGoogle(taskId, dayNumber, completed) {
+                if (!this.isSignedIn) return;
+
+                try {
+                    const customTasks = JSON.parse(appData.load(`custom-tasks-day-${dayNumber}`) || '[]');
+                    const task = customTasks.find(t => t.id === taskId);
+                    
+                    if (task && task.googleEventId) {
+                        // Get the event from Google Calendar
+                        const event = await gapi.client.calendar.events.get({
+                            calendarId: this.calendarId,
+                            eventId: task.googleEventId
+                        });
+
+                        // Update the event description to reflect completion status
+                        const baseDescription = `90-Day Launch - ${task.type.toUpperCase()} task from PWA Dashboard`;
+                        const completionStatus = completed ? '\n\n✅ COMPLETED in PWA Dashboard' : '';
+                        
+                        const updatedEvent = {
+                            ...event.result,
+                            description: baseDescription + completionStatus
+                        };
+
+                        // Update the event in Google Calendar
+                        await gapi.client.calendar.events.update({
+                            calendarId: this.calendarId,
+                            eventId: task.googleEventId,
+                            resource: updatedEvent
+                        });
+
+                        console.log(`🔄 Synced task completion to Google: ${task.text} - ${completed ? 'completed' : 'uncompleted'}`);
+                    }
+                } catch (error) {
+                    console.error('Failed to sync task completion to Google:', error);
+                }
+            }
+
+            getColorForTaskType(type) {
+                const colors = {
+                    'business': '1', // Blue
+                    'health': '10', // Green
+                    'spanish': '6', // Orange
+                    'family': '4', // Red
+                    'personal': '5', // Yellow
+                    'other': '8' // Gray
+                };
+                return colors[type] || '8';
+            }
+
+            updateCalendarWithSyncedData() {
+                // Refresh calendar display to show Google Calendar indicators
+                generateCalendar();
+                
+                // Update all modals that might be open
+                const openModal = document.querySelector('.modal[style*="block"]');
+                if (openModal && openModal.id === 'dayModal') {
+                    const modalTitle = document.getElementById('modalTitle');
+                    if (modalTitle) {
+                        const dayNumber = parseInt(modalTitle.textContent.match(/Day (\d+)/)?.[1]);
+                        if (dayNumber) {
+                            const dayData = calendarData[dayNumber] || getDefaultDayData(dayNumber, new Date());
+                            openDayModal(dayNumber, dayData);
+                        }
+                    }
+                }
+            }
+
+            startAutoSync() {
+                // Sync every 15 minutes when connected
+                this.autoSyncInterval = setInterval(() => {
+                    if (this.isSignedIn) {
+                        this.performBidirectionalSync();
+                    }
+                }, 15 * 60 * 1000);
+            }
+
+            stopAutoSync() {
+                if (this.autoSyncInterval) {
+                    clearInterval(this.autoSyncInterval);
+                    this.autoSyncInterval = null;
+                }
+            }
+
+            updateSyncStatus(message, state) {
+                const statusElement = document.getElementById('syncStatus');
+                const indicator = document.getElementById('syncIndicator');
+                
+                if (statusElement) {
+                    statusElement.textContent = message;
+                }
+                
+                if (indicator) {
+                    indicator.className = 'sync-indicator';
+                    if (state === 'connected') {
+                        indicator.classList.add('connected');
+                    } else if (state === 'syncing') {
+                        indicator.classList.add('syncing');
+                    } else if (state === 'error') {
+                        indicator.classList.add('error');
+                    }
+                }
+            }
+
+            updateUIForConnectedState() {
+                const connectBtn = document.getElementById('connectBtn');
+                const syncBtn = document.getElementById('syncBtn');
+                const disconnectBtn = document.getElementById('disconnectBtn');
+                
+                if (connectBtn) connectBtn.style.display = 'none';
+                if (syncBtn) syncBtn.style.display = 'flex';
+                if (disconnectBtn) disconnectBtn.style.display = 'flex';
+            }
+
+            updateUIForDisconnectedState() {
+                const connectBtn = document.getElementById('connectBtn');
+                const syncBtn = document.getElementById('syncBtn');
+                const disconnectBtn = document.getElementById('disconnectBtn');
+                
+                if (connectBtn) connectBtn.style.display = 'flex';
+                if (syncBtn) syncBtn.style.display = 'none';
+                if (disconnectBtn) disconnectBtn.style.display = 'none';
+            }
+
+            updateLastSyncDisplay() {
+                const lastSyncElement = document.getElementById('lastSyncTime');
+                if (lastSyncElement && this.lastSyncTime) {
+                    lastSyncElement.textContent = `Last synced: ${this.lastSyncTime.toLocaleTimeString()}`;
+                }
+            }
+
+            showSyncNotification(message, type) {
+                const notification = document.createElement('div');
+                notification.className = `sync-status show ${type}`;
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            document.body.removeChild(notification);
+                        }
+                    }, 300);
+                }, 3000);
+            }
+
+            showSetupInstructions() {
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.7);
+                    z-index: 1000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                `;
+                
+                modal.innerHTML = `
+                    <div style="background: white; border-radius: 15px; padding: 25px; max-width: 700px; max-height: 80vh; overflow-y: auto;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: #1e293b;">📅 Google Calendar Setup Guide</h3>
+                            <button onclick="this.closest('div').parentElement.remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+                        </div>
+                        
+                        <div style="color: #64748b; line-height: 1.6;">
+                            <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                                <h4 style="color: #0369a1; margin-bottom: 8px;">🎯 What You'll Get:</h4>
+                                <ul style="margin: 0; padding-left: 20px; color: #0c4a6e;">
+                                    <li><strong>Bidirectional Sync:</strong> Changes in either calendar appear in both</li>
+                                    <li><strong>Automatic Updates:</strong> Task completions sync instantly</li>
+                                    <li><strong>Smart Import:</strong> Your existing Google events appear in the PWA</li>
+                                    <li><strong>Milestone Tracking:</strong> Major launch milestones added to Google Calendar</li>
+                                </ul>
+                            </div>
+                            
+                            <h4 style="color: #1e293b; margin-bottom: 10px;">📋 Setup Steps:</h4>
+                            
+                            <ol style="margin: 15px 0; padding-left: 20px;">
+                                <li><strong>Go to Google Cloud Console:</strong><br>
+                                    <a href="https://console.cloud.google.com" target="_blank" style="color: #4f46e5;">https://console.cloud.google.com</a>
+                                </li>
+                                <li><strong>Create or select a project</strong></li>
+                                <li><strong>Enable Google Calendar API:</strong><br>
+                                    Navigate to "APIs & Services" → "Library" → Search "Google Calendar API" → Enable
+                                </li>
+                                <li><strong>Create credentials:</strong>
+                                    <ul style="margin: 8px 0; padding-left: 20px;">
+                                        <li><strong>API Key:</strong> "APIs & Services" → "Credentials" → "Create Credentials" → "API Key"</li>
+                                        <li><strong>OAuth 2.0 Client ID:</strong> "Create Credentials" → "OAuth client ID" → "Web application"</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Configure OAuth:</strong>
+                                    <ul style="margin: 8px 0; padding-left: 20px;">
+                                        <li>Add your domain to "Authorized JavaScript origins"</li>
+                                        <li>Example: <code>https://myhub90.github.io</code></li>
+                                    </ul>
+                                </li>
+                                <li><strong>Update the code:</strong>
+                                    <ul style="margin: 8px 0; padding-left: 20px;">
+                                        <li>Replace <code>YOUR_GOOGLE_CLIENT_ID</code> with your OAuth Client ID</li>
+                                        <li>Replace <code>YOUR_GOOGLE_API_KEY</code> with your API Key</li>
+                                        <li>Find these around line 400 in the JavaScript code</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                            
+                            <div style="background: #fef2f2; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                                <h4 style="color: #dc2626; margin-bottom: 8px;">🔒 Privacy & Security:</h4>
+                                <p style="margin: 0; color: #7f1d1d;">Your calendar data stays private. The integration only accesses events during the 90-day launch period and only creates/modifies events it created.</p>
+                            </div>
+                            
+                            <div style="background: #ecfdf5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                                <h4 style="color: #059669; margin-bottom: 8px;">💡 Quick Test:</h4>
+                                <p style="margin: 0; color: #064e3b;">Once set up, connect and add a custom task in the PWA. It will automatically appear in your Google Calendar!</p>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 20px; text-align: center;">
+                            <button onclick="this.closest('div').parentElement.remove()" style="background: #4f46e5; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; cursor: pointer; margin-right: 10px;">Got It!</button>
+                            <a href="https://console.cloud.google.com" target="_blank" style="background: #ea4335; color: white; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; display: inline-block;">Open Google Cloud Console</a>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+            }
+        }
+
+        // Initialize Google Calendar integration
+        const googleCalendar = new GoogleCalendarIntegration();
+
+        // Google Calendar interface functions
+        async function connectGoogleCalendar() {
+            await googleCalendar.connect();
+        }
+
+        async function syncWithGoogleCalendar() {
+            await googleCalendar.performBidirectionalSync();
+        }
+
+        async function disconnectGoogleCalendar() {
+            await googleCalendar.disconnect();
+        }
+
+        // Calendar data with detailed schedules
+        const calendarData = {
+            1: {
+                era: 'launch',
+                date: 'August 25',
+                goal: 'Set up foundation tools & design first t-shirts',
+                schedule: [
+                    { time: '6:00 AM', task: 'Workout: 30min strength training' },
+                    { time: '7:00 AM', task: 'Shower & breakfast with kids' },
+                    { time: '8:00 AM', task: 'Homeschool: Math & reading with kids' },
+                    { time: '10:00 AM', task: 'BUSINESS: Set up Printify account' },
+                    { time: '10:30 AM', task: 'BUSINESS: Create first 3 t-shirt designs' },
+                    { time: '12:00 PM', task: 'Lunch & family time' },
+                    { time: '1:00 PM', task: 'Spanish learning: 1 hr active practice' },
+                    { time: '2:00 PM', task: 'BUSINESS: Upload designs to Printify' },
+                    { time: '3:00 PM', task: 'Spanish: 1 hr passive (videos/podcasts)' },
+                    { time: '4:00 PM', task: 'Kids activities & family time' },
+                    { time: '6:00 PM', task: 'Dinner & family time' },
+                    { time: '8:00 PM', task: 'Spanish: 1 hr conversation practice' },
+                    { time: '9:00 PM', task: 'Plan tomorrow & wind down' }
+                ],
+                tools: ['Printify', 'Canva', 'Language Apps'],
+                notes: 'Focus on simple, motivational designs. Test print quality.'
+            },
+            16: {
+                era: 'buildout',
+                date: 'September 9',
+                goal: 'Start course module creation pipeline',
+                schedule: [
+                    { time: '6:00 AM', task: 'Workout: Full body strength' },
+                    { time: '8:00 AM', task: 'Homeschool: Advanced subjects' },
+                    { time: '10:00 AM', task: 'BUSINESS: Script Course 1, Module 1' },
+                    { time: '11:30 AM', task: 'BUSINESS: Record Module 1' },
+                    { time: '12:00 PM', task: 'Lunch break' },
+                    { time: '1:00 PM', task: 'Spanish: Advanced grammar' },
+                    { time: '2:00 PM', task: 'BUSINESS: Edit and upload course' },
+                    { time: '3:00 PM', task: 'Spanish: Literature reading' },
+                    { time: '4:00 PM', task: 'Family time & errands' },
+                    { time: '8:00 PM', task: 'Spanish: Advanced conversation' },
+                    { time: '9:00 PM', task: 'Plan next 3 modules' }
+                ],
+                tools: ['Course Creation Tools', 'Video Editor', 'LMS Platform'],
+                notes: 'Establish 2-modules-per-day rhythm. Quality over speed.'
+            },
+            41: {
+                era: 'marketing',
+                date: 'October 4',
+                goal: 'Launch automation & build audience',
+                schedule: [
+                    { time: '6:00 AM', task: 'Workout: Cardio intervals' },
+                    { time: '8:00 AM', task: 'Homeschool: Project work' },
+                    { time: '10:00 AM', task: 'BUSINESS: Set up Pinterest automation' },
+                    { time: '11:00 AM', task: 'BUSINESS: Create 50 pins for automation' },
+                    { time: '12:00 PM', task: 'Lunch break' },
+                    { time: '1:00 PM', task: 'Spanish: Business vocabulary' },
+                    { time: '2:00 PM', task: 'BUSINESS: Build email funnel' },
+                    { time: '3:00 PM', task: 'Spanish: News & current events' },
+                    { time: '4:00 PM', task: 'Family activities' },
+                    { time: '8:00 PM', task: 'Spanish: Advanced writing' },
+                    { time: '9:00 PM', task: 'Review analytics & metrics' }
+                ],
+                tools: ['Automation Tools', 'Email Platform', 'Analytics'],
+                notes: 'Goal: 1000 Pinterest followers, 100 email subscribers'
+            },
+            70: {
+                era: 'maintenance',
+                date: 'November 2',
+                goal: 'Optimize systems & scale successful channels',
+                schedule: [
+                    { time: '6:00 AM', task: 'Workout: Strength training' },
+                    { time: '8:00 AM', task: 'Homeschool: Independent projects' },
+                    { time: '10:00 AM', task: 'BUSINESS: Analyze revenue streams' },
+                    { time: '11:00 AM', task: 'BUSINESS: Optimize top content' },
+                    { time: '12:00 PM', task: 'Lunch break' },
+                    { time: '1:00 PM', task: 'Spanish: Professional conversation' },
+                    { time: '2:00 PM', task: 'BUSINESS: Scale successful campaigns' },
+                    { time: '3:00 PM', task: 'Spanish: Technical writing' },
+                    { time: '4:00 PM', task: 'Deep clean & organization' },
+                    { time: '8:00 PM', task: 'Spanish: Cultural immersion' },
+                    { time: '9:00 PM', task: 'Plan next 30 days strategy' }
+                ],
+                tools: ['Analytics Dashboard', 'Scaling Tools', 'Optimization Software'],
+                notes: 'Focus on systems that generate consistent revenue'
+            }
+        };
+
+        // Tools Data
+        const toolsData = {
+            launch: [
+                {
+                    id: 'printify',
+                    name: 'Printify',
+                    category: 'Product Creation',
+                    description: 'Print-on-demand service for creating and selling custom t-shirts',
+                    era: 'launch',
+                    steps: [
+                        'Create free account at printify.com',
+                        'Choose t-shirt products from catalog',
+                        'Upload your designs (300 DPI, PNG format)',
+                        'Set profit margins ($5-8 per shirt)',
+                        'Connect to your store',
+                        'Test with sample order'
+                    ],
+                    completed: false
+                },
+                {
+                    id: 'canva',
+                    name: 'Canva',
+                    category: 'Design',
+                    description: 'Design tool for creating t-shirt designs and marketing materials',
+                    era: 'launch',
+                    steps: [
+                        'Sign up for Canva Pro account',
+                        'Search t-shirt design templates',
+                        'Create motivational quote designs',
+                        'Use bold fonts like Impact or Bebas Neue',
+                        'Export as PNG with transparent background',
+                        'Create brand templates for consistency'
+                    ],
+                    completed: false
+                },
+                {
+                    id: 'google-calendar',
+                    name: 'Google Calendar Integration',
+                    category: 'Organization',
+                    description: 'Sync your 90-day launch schedule with Google Calendar for seamless planning',
+                    era: 'launch',
+                    steps: [
+                        'Go to Google Cloud Console (console.cloud.google.com)',
+                        'Create a new project or select existing',
+                        'Enable Google Calendar API',
+                        'Create API Key and OAuth 2.0 credentials',
+                        'Add your domain to authorized origins',
+                        'Update dashboard code with your credentials',
+                        'Connect and sync your calendar'
+                    ],
+                    completed: false
+                }
+            ],
+            buildout: [
+                {
+                    id: 'course-platform',
+                    name: 'Course Platform',
+                    category: 'Education',
+                    description: 'Platform for hosting and selling your online courses',
+                    era: 'buildout',
+                    steps: [
+                        'Choose course platform (Teachable, Thinkific, etc.)',
+                        'Set up account and branding',
+                        'Create course structure outline',
+                        'Upload first module',
+                        'Set pricing and payment options',
+                        'Create student enrollment process'
+                    ],
+                    completed: false
+                }
+            ],
+            marketing: [
+                {
+                    id: 'email-automation',
+                    name: 'Email Automation',
+                    category: 'Marketing',
+                    description: 'Automated email sequences for nurturing and converting leads',
+                    era: 'marketing',
+                    steps: [
+                        'Choose email platform (ConvertKit, Mailchimp, etc.)',
+                        'Create lead magnet (free course or guide)',
+                        'Design opt-in forms',
+                        'Write welcome email sequence',
+                        'Set up automation triggers',
+                        'Create sales sequences'
+                    ],
+                    completed: false
+                }
+            ],
+            maintenance: [
+                {
+                    id: 'analytics-dashboard',
+                    name: 'Analytics Dashboard',
+                    category: 'Analytics',
+                    description: 'Comprehensive dashboard for tracking all metrics and KPIs',
+                    era: 'maintenance',
+                    steps: [
+                        'Set up Google Analytics 4',
+                        'Connect all platforms to tracking',
+                        'Create custom dashboards',
+                        'Set up conversion tracking',
+                        'Schedule automated reports',
+                        'Monitor key metrics daily'
+                    ],
+                    completed: false
+                }
+            ]
+        };
+
+        // Tab Management
         function showTab(tabName) {
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
@@ -561,6 +2019,7 @@
             document.getElementById(tabName).classList.add('active');
         }
 
+        // Progress Management
         function updateProgressCircle(element, percentage) {
             const degrees = (percentage / 100) * 360;
             element.style.background = `conic-gradient(#4f46e5 ${degrees}deg, #e2e8f0 ${degrees}deg)`;
@@ -594,6 +2053,8 @@
                         }
                     }
                 }
+                
+                appData.save(`progress-${category}`, progress);
             });
         }
 
@@ -604,8 +2065,17 @@
             return Math.max(1, Math.min(90, daysPassed + 1));
         }
 
+        function getCurrentEra(dayNumber = null) {
+            const day = dayNumber || getCurrentDayNumber();
+            if (day <= 15) return { name: 'Launch', color: '#ef4444', days: '1-15' };
+            if (day <= 40) return { name: 'Build-Out', color: '#f59e0b', days: '16-40' };
+            if (day <= 60) return { name: 'Marketing', color: '#10b981', days: '41-60' };
+            return { name: 'Maintenance', color: '#8b5cf6', days: '61-90' };
+        }
+
         function updateEraProgress() {
             const currentDay = getCurrentDayNumber();
+            const currentEra = getCurrentEra(currentDay);
             
             const currentDayDisplay = document.getElementById('currentDayDisplay');
             if (currentDayDisplay) {
@@ -620,15 +2090,8 @@
             
             const currentEraName = document.getElementById('currentEraName');
             if (currentEraName) {
-                if (currentDay <= 15) {
-                    currentEraName.textContent = 'Launch Era';
-                } else if (currentDay <= 40) {
-                    currentEraName.textContent = 'Build-Out Era';
-                } else if (currentDay <= 60) {
-                    currentEraName.textContent = 'Marketing Era';
-                } else {
-                    currentEraName.textContent = 'Maintenance Era';
-                }
+                currentEraName.textContent = `${currentEra.name} Era`;
+                currentEraName.style.color = currentEra.color;
             }
             
             const eraProgressText = document.getElementById('eraProgressText');
@@ -661,6 +2124,42 @@
             }
         }
 
+        // Streak Counter
+        function updateStreakCounter() {
+            const streak = calculateCurrentStreak();
+            const streakElement = document.getElementById('streakNumber');
+            if (streakElement) {
+                streakElement.textContent = streak;
+            }
+        }
+
+        function calculateCurrentStreak() {
+            let streak = 0;
+            const today = new Date();
+            
+            for (let i = 0; i < 30; i++) {
+                const checkDate = new Date(today);
+                checkDate.setDate(today.getDate() - i);
+                const dateStr = checkDate.toISOString().split('T')[0];
+                
+                const hasCompletedTasks = checkForCompletedTasksOnDate(dateStr);
+                
+                if (hasCompletedTasks) {
+                    streak++;
+                } else {
+                    break;
+                }
+            }
+            
+            return streak;
+        }
+
+        function checkForCompletedTasksOnDate(dateStr) {
+            const today = new Date().toISOString().split('T')[0];
+            return dateStr === today;
+        }
+
+        // Task Management - Bidirectional (can check AND uncheck)
         function toggleTask(element, category) {
             const checkbox = element.querySelector('input[type="checkbox"]');
             if (!checkbox) return;
@@ -669,111 +2168,1001 @@
             
             if (checkbox.checked) {
                 element.classList.add('completed');
+                console.log('✅ Task completed:', element.textContent.trim());
             } else {
                 element.classList.remove('completed');
+                console.log('↩️ Task unchecked:', element.textContent.trim());
             }
+            
+            const taskText = element.textContent.trim();
+            const taskId = `${category}-${taskText.replace(/\s+/g, '-').toLowerCase()}`;
+            
+            appData.save(taskId, checkbox.checked);
             
             updateAllProgressCircles();
             updateEraProgress();
             updateStats();
-            showSuccessMessage('Task updated! ✅');
+            updateStreakCounter();
+            
+            const action = checkbox.checked ? 'completed' : 'unchecked';
+            showTaskFeedback(`Task ${action}! All metrics updated.`);
+        }
+        
+        function showTaskFeedback(message) {
+            const feedback = document.createElement('div');
+            feedback.style.cssText = `
+                position: fixed;
+                bottom: 80px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #4f46e5;
+                color: white;
+                padding: 8px 16px;
+                border-radius: 20px;
+                font-size: 0.8rem;
+                font-weight: 600;
+                z-index: 1000;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                pointer-events: none;
+            `;
+            feedback.textContent = message;
+            document.body.appendChild(feedback);
+            
+            setTimeout(() => feedback.style.opacity = '1', 100);
+            setTimeout(() => {
+                feedback.style.opacity = '0';
+                setTimeout(() => {
+                    if (feedback.parentNode) {
+                        document.body.removeChild(feedback);
+                    }
+                }, 300);
+            }, 1500);
         }
 
         function saveProgress(category) {
             updateAllProgressCircles();
             updateEraProgress();
             updateStats();
-            showSuccessMessage('Progress saved! 💾');
+            updateStreakCounter();
+            appData.showSaveIndicator();
         }
 
+        // Calendar Management
+        function generateCalendar() {
+            const calendarGrid = document.getElementById('calendarGrid');
+            if (!calendarGrid) return;
+            
+            // Clear existing calendar
+            calendarGrid.innerHTML = '';
+            
+            const startDate = new Date(2025, 7, 25);
+            
+            const dayHeaders = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            dayHeaders.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'calendar-day-header';
+                header.textContent = day;
+                calendarGrid.appendChild(header);
+            });
+
+            for (let i = 0; i < 90; i++) {
+                const currentDate = new Date(startDate);
+                currentDate.setDate(startDate.getDate() + i);
+                
+                const dayElement = document.createElement('div');
+                const dayNumber = i + 1;
+                const dayData = calendarData[dayNumber] || getDefaultDayData(dayNumber, currentDate);
+                
+                dayElement.className = `calendar-day ${dayData.era}`;
+                
+                dayElement.innerHTML = `
+                    <div class="day-number">Day ${dayNumber}</div>
+                    <div class="day-date">${currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
+                `;
+                
+                // Check for custom tasks
+                const customTasks = JSON.parse(appData.load(`custom-tasks-day-${dayNumber}`) || '[]');
+                if (customTasks.length > 0) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'task-indicator';
+                    dayElement.appendChild(indicator);
+                }
+                
+                // Check for Google Calendar events
+                const hasGoogleEvents = customTasks.some(task => task.source === 'google');
+                if (hasGoogleEvents) {
+                    const googleIndicator = document.createElement('div');
+                    googleIndicator.className = 'google-indicator';
+                    dayElement.appendChild(googleIndicator);
+                }
+                
+                dayElement.addEventListener('click', () => openDayModal(dayNumber, dayData));
+                calendarGrid.appendChild(dayElement);
+            }
+        }
+
+        function getDefaultDayData(dayNumber, date) {
+            let era = 'launch';
+            if (dayNumber > 15 && dayNumber <= 40) era = 'buildout';
+            else if (dayNumber > 40 && dayNumber <= 60) era = 'marketing';
+            else if (dayNumber > 60) era = 'maintenance';
+            
+            return {
+                era: era,
+                date: date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }),
+                goal: 'Continue daily routine & business building',
+                schedule: [
+                    { time: '6:00 AM', task: 'Morning workout' },
+                    { time: '8:00 AM', task: 'Homeschool with kids' },
+                    { time: '10:00 AM', task: 'Business deep work block' },
+                    { time: '1:00 PM', task: 'Spanish learning (3 hours total)' },
+                    { time: '4:00 PM', task: 'Family time & household tasks' },
+                    { time: '8:00 PM', task: 'Evening Spanish practice' }
+                ],
+                tools: ['Daily Tools', 'Spanish Apps', 'Business Platforms'],
+                notes: 'Maintain consistent daily rhythm'
+            };
+        }
+
+        function openDayModal(dayNumber, dayData) {
+            const modal = document.getElementById('dayModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalEra = document.getElementById('modalEra');
+            const modalContent = document.getElementById('modalContent');
+            
+            if (!modal || !modalTitle || !modalEra || !modalContent) return;
+            
+            modalTitle.textContent = `Day ${dayNumber} - ${dayData.date}`;
+            modalEra.textContent = `${getEraName(dayData.era)} Era`;
+            modalEra.className = `modal-era era-${dayData.era}`;
+            
+            modalContent.innerHTML = `
+                <div class="schedule-section">
+                    <div class="section-title">🎯 Daily Goal</div>
+                    <p style="color: #64748b; margin-bottom: 20px; line-height: 1.5;">${dayData.goal}</p>
+                    
+                    <div class="section-title">📅 Complete Schedule</div>
+                    ${dayData.schedule.map(item => `
+                        <div class="schedule-item">
+                            <div class="schedule-time">${item.time}</div>
+                            <div>${item.task}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div style="background: #f0f9ff; padding: 15px; border-radius: 10px; margin: 20px 0;">
+                    <div class="section-title" style="color: #0369a1; margin-bottom: 10px;">🛠️ Tools & Resources</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                        ${dayData.tools.map(tool => `<span style="background: white; padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; color: #0369a1; border: 1px solid #bae6fd;">${tool}</span>`).join('')}
+                    </div>
+                </div>
+                
+                ${dayData.notes ? `
+                    <div class="schedule-section">
+                        <div class="section-title">📝 Notes & Tips</div>
+                        <p style="color: #64748b; font-style: italic; line-height: 1.4;">${dayData.notes}</p>
+                    </div>
+                ` : ''}
+                
+                <div class="schedule-section">
+                    <div class="section-title">✅ Custom Tasks & Google Calendar Events</div>
+                    <div id="customTasks-${dayNumber}">
+                        <!-- Custom tasks will be loaded here -->
+                    </div>
+                    
+                    <div style="margin-top: 15px;">
+                        <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                            <input type="text" id="newTask-${dayNumber}" placeholder="Add a custom task..." style="flex: 1; padding: 8px 12px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.85rem;">
+                            <button onclick="addCustomTask(${dayNumber})" style="background: #10b981; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-size: 0.85rem; cursor: pointer; white-space: nowrap;">+ Add</button>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="time" id="newTaskTime-${dayNumber}" style="padding: 6px 8px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.8rem;">
+                            <select id="newTaskType-${dayNumber}" style="padding: 6px 8px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.8rem; flex: 1;">
+                                <option value="business">🏢 Business</option>
+                                <option value="health">💪 Health</option>
+                                <option value="spanish">🇪🇸 Spanish</option>
+                                <option value="family">👨‍👩‍👧‍👦 Family</option>
+                                <option value="personal">🎯 Personal</option>
+                                <option value="other">📝 Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            loadCustomTasks(dayNumber);
+            modal.style.display = 'block';
+        }
+
+        function getEraName(era) {
+            const names = {
+                'launch': 'Launch',
+                'buildout': 'Build-Out',
+                'marketing': 'Marketing', 
+                'maintenance': 'Maintenance'
+            };
+            return names[era] || 'Launch';
+        }
+
+        function closeDayModal() {
+            const modal = document.getElementById('dayModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Custom Task Management with Google Calendar Integration
+        function addCustomTask(dayNumber) {
+            const taskInput = document.getElementById(`newTask-${dayNumber}`);
+            const timeInput = document.getElementById(`newTaskTime-${dayNumber}`);
+            const typeSelect = document.getElementById(`newTaskType-${dayNumber}`);
+            
+            if (!taskInput || !timeInput || !typeSelect) return;
+            
+            const taskText = taskInput.value.trim();
+            if (!taskText) return;
+            
+            const customTask = {
+                id: Date.now(),
+                text: taskText,
+                time: timeInput.value || '12:00',
+                type: typeSelect.value,
+                completed: false,
+                source: 'pwa'
+            };
+            
+            const existingTasks = JSON.parse(appData.load(`custom-tasks-day-${dayNumber}`) || '[]');
+            existingTasks.push(customTask);
+            appData.save(`custom-tasks-day-${dayNumber}`, JSON.stringify(existingTasks));
+            
+            taskInput.value = '';
+            timeInput.value = '';
+            
+            loadCustomTasks(dayNumber);
+            updateAllProgressCircles();
+            updateEraProgress();
+            updateStats();
+            updateCalendarWithSyncedData();
+            
+            // Auto-sync to Google Calendar if connected
+            if (googleCalendar.isSignedIn) {
+                setTimeout(() => {
+                    googleCalendar.performBidirectionalSync();
+                }, 1000);
+            }
+        }
+
+        function loadCustomTasks(dayNumber) {
+            const container = document.getElementById(`customTasks-${dayNumber}`);
+            if (!container) return;
+            
+            const customTasks = JSON.parse(appData.load(`custom-tasks-day-${dayNumber}`) || '[]');
+            
+            if (customTasks.length === 0) {
+                container.innerHTML = '<p style="color: #94a3b8; font-style: italic; font-size: 0.85rem; margin: 10px 0;">No custom tasks yet. Add one above!</p>';
+                return;
+            }
+            
+            customTasks.sort((a, b) => a.time.localeCompare(b.time));
+            
+            container.innerHTML = customTasks.map(task => {
+                const typeIcons = {
+                    'business': '🏢',
+                    'health': '💪',
+                    'spanish': '🇪🇸',
+                    'family': '👨‍👩‍👧‍👦',
+                    'personal': '🎯',
+                    'other': '📝'
+                };
+                
+                const sourceIcon = task.source === 'google' ? '📅 ' : '';
+                const isFromGoogle = task.source === 'google';
+                
+                return `
+                    <div style="display: flex; align-items: center; gap: 10px; padding: 8px; background: ${task.completed ? '#dcfce7' : '#f8fafc'}; border: 2px solid ${task.completed ? '#16a34a' : '#e2e8f0'}; border-radius: 6px; margin-bottom: 8px; ${isFromGoogle ? 'border-left: 4px solid #ea4335;' : ''}">
+                        <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleCustomTask(${dayNumber}, ${task.id})" style="width: 16px; height: 16px; margin: 0; accent-color: #4f46e5;">
+                        <div style="display: flex; align-items: center; gap: 6px; flex: 1;">
+                            <span style="font-weight: 600; color: #4f46e5; font-size: 0.8rem; min-width: 50px;">${task.time}</span>
+                            <span style="font-size: 0.85rem;">${sourceIcon}${typeIcons[task.type]}</span>
+                            <span style="font-size: 0.85rem; ${task.completed ? 'text-decoration: line-through; color: #6b7280;' : 'color: #1e293b;'}">${task.text}</span>
+                            ${isFromGoogle ? '<span style="font-size: 0.7rem; color: #ea4335; font-weight: 600;">GOOGLE</span>' : ''}
+                        </div>
+                        ${!isFromGoogle ? `<button onclick="deleteCustomTask(${dayNumber}, ${task.id})" style="background: #ef4444; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer;">Delete</button>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleCustomTask(dayNumber, taskId) {
+            const customTasks = JSON.parse(appData.load(`custom-tasks-day-${dayNumber}`) || '[]');
+            const taskIndex = customTasks.findIndex(task => task.id === taskId);
+            
+            if (taskIndex !== -1) {
+                const wasCompleted = customTasks[taskIndex].completed;
+                customTasks[taskIndex].completed = !wasCompleted;
+                
+                appData.save(`custom-tasks-day-${dayNumber}`, JSON.stringify(customTasks));
+                loadCustomTasks(dayNumber);
+                
+                updateAllProgressCircles();
+                updateEraProgress();
+                updateStats();
+                updateStreakCounter();
+                updateCalendarWithSyncedData();
+                
+                const action = customTasks[taskIndex].completed ? 'completed' : 'unchecked';
+                showTaskFeedback(`Custom task ${action}! Metrics updated.`);
+                
+                console.log(`↔️ Custom task toggled: ${customTasks[taskIndex].text} - ${action}`);
+                
+                // Sync completion status to Google Calendar if connected and task has googleEventId
+                if (googleCalendar.isSignedIn && customTasks[taskIndex].googleEventId) {
+                    setTimeout(() => {
+                        googleCalendar.syncTaskCompletionToGoogle(taskId, dayNumber, customTasks[taskIndex].completed);
+                    }, 500);
+                }
+            }
+        }
+
+        function deleteCustomTask(dayNumber, taskId) {
+            if (confirm('Delete this custom task?')) {
+                const customTasks = JSON.parse(appData.load(`custom-tasks-day-${dayNumber}`) || '[]');
+                const filteredTasks = customTasks.filter(task => task.id !== taskId);
+                appData.save(`custom-tasks-day-${dayNumber}`, JSON.stringify(filteredTasks));
+                loadCustomTasks(dayNumber);
+                
+                updateAllProgressCircles();
+                updateEraProgress();
+                updateStats();
+                updateCalendarWithSyncedData();
+                
+                // Auto-sync to Google Calendar if connected
+                if (googleCalendar.isSignedIn) {
+                    setTimeout(() => {
+                        googleCalendar.performBidirectionalSync();
+                    }, 1000);
+                }
+            }
+        }
+
+        // Tools Management
+        function filterTools(era) {
+            document.querySelectorAll('.tool-filter').forEach(filter => filter.classList.remove('active'));
+            const activeFilter = document.querySelector(`[data-era="${era}"]`);
+            if (activeFilter) {
+                activeFilter.classList.add('active');
+            }
+            displayTools(era);
+        }
+
+        function displayTools(era) {
+            const container = document.getElementById('toolsContainer');
+            if (!container) return;
+            
+            let tools = [];
+            if (era === 'all') {
+                Object.values(toolsData).forEach(eraTools => tools.push(...eraTools));
+            } else {
+                tools = toolsData[era] || [];
+            }
+            
+            if (tools.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #64748b; margin: 40px 0;">No tools for this era yet.</p>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="tools-grid">
+                    ${tools.map(tool => {
+                        const isCompleted = appData.load(`tool-${tool.id}-completed`) === true;
+                        const eraClass = `era-${tool.era}`;
+                        
+                        return `
+                            <div class="tool-card ${isCompleted ? 'completed' : ''}" onclick="openToolModal('${tool.id}')">
+                                <div class="tool-header">
+                                    <div>
+                                        <div class="tool-name">${tool.name}</div>
+                                        <div class="tool-category">${tool.category}</div>
+                                    </div>
+                                    <div class="tool-status ${isCompleted ? 'completed' : ''}" onclick="event.stopPropagation(); toggleToolComplete('${tool.id}')">
+                                        ${isCompleted ? '✓' : '○'}
+                                    </div>
+                                </div>
+                                <div class="tool-description">${tool.description}</div>
+                                <div class="tool-era ${eraClass}">${tool.era.charAt(0).toUpperCase() + tool.era.slice(1)} Era</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        function openToolModal(toolId) {
+            let tool = null;
+            for (const era in toolsData) {
+                tool = toolsData[era].find(t => t.id === toolId);
+                if (tool) break;
+            }
+            
+            if (!tool) return;
+            
+            const modal = document.getElementById('toolModal');
+            const modalTitle = document.getElementById('toolModalTitle');
+            const modalContent = document.getElementById('toolModalContent');
+            
+            if (!modal || !modalTitle || !modalContent) return;
+            
+            const isCompleted = appData.load(`tool-${tool.id}-completed`) === true;
+            const eraClass = `era-${tool.era}`;
+            
+            modalTitle.textContent = `${tool.name} Setup Guide`;
+            
+            modalContent.innerHTML = `
+                <div style="margin-bottom: 20px;">
+                    <div class="tool-era ${eraClass}" style="margin-bottom: 10px;">${tool.era.charAt(0).toUpperCase() + tool.era.slice(1)} Era</div>
+                    <div style="color: #64748b; margin-bottom: 15px; line-height: 1.5;">${tool.description}</div>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                        <div style="margin-left: auto;">
+                            <button onclick="toggleToolComplete('${tool.id}')" style="background: ${isCompleted ? '#64748b' : '#10b981'}; color: white; border: none; padding: 8px 15px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer;">
+                                ${isCompleted ? '✓ Completed' : 'Mark Complete'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <div class="section-title">📋 Step-by-Step Setup</div>
+                    ${tool.steps.map((step, index) => `
+                        <div style="display: flex; margin-bottom: 12px; padding: 10px; background: #f8fafc; border-radius: 6px; font-size: 0.85rem;">
+                            <div style="background: #4f46e5; color: white; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 600; margin-right: 10px; flex-shrink: 0;">${index + 1}</div>
+                            <div style="flex: 1; color: #1e293b; line-height: 1.4;">${step}</div>
+                        </div>
+                    `).join('')}
+                </div>
+                
+                <div style="margin-top: 25px; padding: 15px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #0369a1;">
+                    <div style="font-weight: 600; color: #0369a1; margin-bottom: 8px;">💡 Pro Tip</div>
+                    <div style="color: #0c4a6e; font-size: 0.9rem; line-height: 1.4;">
+                        Follow the steps in order for best results. Take your time with setup to avoid issues later.
+                    </div>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+        }
+
+        function toggleToolComplete(toolId) {
+            const currentStatus = appData.load(`tool-${toolId}-completed`) === true;
+            const newStatus = !currentStatus;
+            
+            appData.save(`tool-${toolId}-completed`, newStatus);
+            
+            const activeEra = document.querySelector('.tool-filter.active');
+            if (activeEra) {
+                displayTools(activeEra.dataset.era);
+            }
+            
+            const modal = document.getElementById('toolModal');
+            if (modal && modal.style.display === 'block') {
+                openToolModal(toolId);
+            }
+            
+            updateAllProgressCircles();
+            updateEraProgress();
+            updateStats();
+            updateStreakCounter();
+            
+            const action = newStatus ? 'completed' : 'unmarked';
+            showTaskFeedback(`Tool ${action}! Progress updated.`);
+            
+            let toolName = toolId;
+            for (const era in toolsData) {
+                const tool = toolsData[era].find(t => t.id === toolId);
+                if (tool) {
+                    toolName = tool.name;
+                    break;
+                }
+            }
+            console.log(`🛠️ Tool toggled: ${toolName} - ${action}`);
+        }
+
+        function closeToolModal() {
+            const modal = document.getElementById('toolModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Custom Tool Management
+        function showAddToolModal() {
+            const modal = document.getElementById('addToolModal');
+            if (modal) {
+                modal.style.display = 'block';
+            }
+        }
+
+        function closeAddToolModal() {
+            const modal = document.getElementById('addToolModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+            
+            const toolName = document.getElementById('toolName');
+            const toolDescription = document.getElementById('toolDescription');
+            const toolEra = document.getElementById('toolEra');
+            
+            if (toolName) toolName.value = '';
+            if (toolDescription) toolDescription.value = '';
+            if (toolEra) toolEra.value = 'launch';
+        }
+
+        function saveCustomTool() {
+            const toolName = document.getElementById('toolName');
+            const toolDescription = document.getElementById('toolDescription');
+            const toolEra = document.getElementById('toolEra');
+            
+            if (!toolName || !toolDescription || !toolEra) return;
+            
+            const name = toolName.value.trim();
+            const description = toolDescription.value.trim();
+            const era = toolEra.value;
+            
+            if (!name || !description) {
+                alert('Please fill in tool name and description');
+                return;
+            }
+            
+            const customTool = {
+                id: 'custom_' + Date.now(),
+                name,
+                description,
+                category: 'Custom',
+                era,
+                steps: ['Set up and configure ' + name, 'Test functionality', 'Integrate with workflow'],
+                completed: false
+            };
+            
+            if (!toolsData[era]) {
+                toolsData[era] = [];
+            }
+            toolsData[era].push(customTool);
+            
+            const customTools = JSON.parse(appData.load('custom-tools') || '[]');
+            customTools.push(customTool);
+            appData.save('custom-tools', JSON.stringify(customTools));
+            
+            closeAddToolModal();
+            
+            const activeEra = document.querySelector('.tool-filter.active');
+            if (activeEra) {
+                displayTools(activeEra.dataset.era);
+            }
+        }
+
+        // Backup and Export functions
+        function backupData() {
+            try {
+                const backup = {
+                    timestamp: new Date().toISOString(),
+                    appData: appData.storage || {},
+                    customTools: JSON.parse(appData.load('custom-tools') || '[]'),
+                    version: '1.0'
+                };
+                
+                const dataStr = JSON.stringify(backup, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `launch-dashboard-backup-${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                
+                showExportSuccess('💾 Backup created and downloaded!');
+            } catch (error) {
+                console.error('Backup failed:', error);
+                alert('Backup failed. Please try again.');
+            }
+        }
+
+        function exportToNotion() {
+            try {
+                const completedTasks = [];
+                
+                ['business', 'health', 'spanish', 'social'].forEach(category => {
+                    const progress = appData.load(`progress-${category}`) || 0;
+                    completedTasks.push({
+                        category: category,
+                        progress: progress,
+                        date: new Date().toISOString().split('T')[0]
+                    });
+                });
+                
+                document.querySelectorAll('.checkbox-item.completed').forEach(element => {
+                    const taskText = element.textContent.trim();
+                    const category = element.closest('.tab-content').id;
+                    completedTasks.push({
+                        task: taskText,
+                        category: category,
+                        type: 'regular',
+                        completed: true,
+                        date: new Date().toISOString().split('T')[0]
+                    });
+                });
+                
+                for (let day = 1; day <= 90; day++) {
+                    const customTasks = JSON.parse(appData.load(`custom-tasks-day-${day}`) || '[]');
+                    customTasks.forEach(task => {
+                        if (task.completed) {
+                            completedTasks.push({
+                                day: day,
+                                task: task.text,
+                                type: task.type,
+                                time: task.time,
+                                completed: true,
+                                source: task.source,
+                                date: new Date().toISOString().split('T')[0]
+                            });
+                        }
+                    });
+                }
+                
+                let completedToolsList = [];
+                for (const era in toolsData) {
+                    toolsData[era].forEach(tool => {
+                        if (appData.load(`tool-${tool.id}-completed`) === true) {
+                            completedToolsList.push({
+                                tool: tool.name,
+                                category: tool.category,
+                                era: tool.era,
+                                completed: true,
+                                date: new Date().toISOString().split('T')[0]
+                            });
+                        }
+                    });
+                }
+                
+                const startDate = new Date('2025-08-25');
+                const currentDate = new Date();
+                const daysPassed = Math.max(0, Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24)));
+                const currentDay = Math.min(90, daysPassed + 1);
+                
+                const notionExport = {
+                    exportDate: new Date().toISOString(),
+                    exportTime: new Date().toLocaleString(),
+                    launchDay: currentDay,
+                    daysRemaining: Math.max(0, 90 - daysPassed),
+                    totalTasksCompleted: completedTasks.filter(t => t.task).length,
+                    totalToolsCompleted: completedToolsList.length,
+                    googleCalendarConnected: googleCalendar.isSignedIn,
+                    lastSyncTime: googleCalendar.lastSyncTime,
+                    progressSummary: {
+                        business: appData.load('progress-business') || 0,
+                        health: appData.load('progress-health') || 0,
+                        spanish: appData.load('progress-spanish') || 0,
+                        social: appData.load('progress-social') || 0
+                    },
+                    completedTasks: completedTasks.filter(t => t.task),
+                    completedTools: completedToolsList,
+                    progressData: completedTasks.filter(t => t.progress !== undefined)
+                };
+                
+                const notionText = `## 📊 90-Day Launch Progress Export
+**Export Date:** ${new Date().toLocaleDateString()}
+**Launch Day:** ${currentDay} of 90
+**Days Remaining:** ${Math.max(0, 90 - daysPassed)}
+**Google Calendar:** ${googleCalendar.isSignedIn ? '✅ Connected' : '❌ Not Connected'}
+
+### 📈 Progress Summary
+- 🏢 **Business:** ${notionExport.progressSummary.business}%
+- 💪 **Health:** ${notionExport.progressSummary.health}%
+- 🇪🇸 **Spanish:** ${notionExport.progressSummary.spanish}%
+- 📱 **Social:** ${notionExport.progressSummary.social}%
+
+### ✅ Completed Tasks (${notionExport.totalTasksCompleted})
+${notionExport.completedTasks.map(task => 
+    `- **${task.category.toUpperCase()}:** ${task.task} ${task.day ? `(Day ${task.day})` : ''} ${task.time ? `[${task.time}]` : ''} ${task.source === 'google' ? '📅' : ''}`
+).join('\n')}
+
+### 🛠️ Completed Tools (${notionExport.totalToolsCompleted})
+${notionExport.completedTools.map(tool => 
+    `- **${tool.era.toUpperCase()}:** ${tool.tool} (${tool.category})`
+).join('\n')}
+
+### 📋 Next Steps
+- Continue daily tracking in PWA
+- Review progress weekly
+- Adjust goals based on performance
+${googleCalendar.isSignedIn ? '- Keep Google Calendar sync active' : '- Consider setting up Google Calendar integration'}
+
+---
+*Exported from 90-Day Launch PWA Dashboard with Google Calendar Integration*`;
+                
+                const jsonStr = JSON.stringify(notionExport, null, 2);
+                const jsonBlob = new Blob([jsonStr], {type: 'application/json'});
+                const jsonUrl = URL.createObjectURL(jsonBlob);
+                const jsonLink = document.createElement('a');
+                jsonLink.href = jsonUrl;
+                jsonLink.download = `launch-progress-${new Date().toISOString().split('T')[0]}.json`;
+                jsonLink.click();
+                
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(notionText).then(() => {
+                        showExportSuccess('📋 Progress copied to clipboard! Paste into your Notion dashboard.');
+                    }).catch(() => {
+                        showExportModal(notionText);
+                    });
+                } else {
+                    showExportModal(notionText);
+                }
+                
+            } catch (error) {
+                console.error('Export failed:', error);
+                alert('Export failed. Please try again.');
+            }
+        }
+
+        function showExportSuccess(message) {
+            const indicator = document.createElement('div');
+            indicator.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #10b981;
+                color: white;
+                padding: 15px 25px;
+                border-radius: 10px;
+                font-weight: 600;
+                z-index: 1000;
+                font-size: 0.9rem;
+                max-width: 300px;
+                text-align: center;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            `;
+            indicator.textContent = message;
+            document.body.appendChild(indicator);
+            
+            setTimeout(() => {
+                if (indicator.parentNode) {
+                    document.body.removeChild(indicator);
+                }
+            }, 4000);
+        }
+
+        function showExportModal(content) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.7);
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 15px; padding: 25px; max-width: 600px; max-height: 80vh; overflow-y: auto;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3 style="margin: 0; color: #1e293b;">📤 Export to Notion</h3>
+                        <button onclick="this.closest('div').parentElement.remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+                    </div>
+                    <p style="color: #64748b; margin-bottom: 15px;">Copy this formatted text and paste it into your Notion dashboard:</p>
+                    <textarea readonly style="width: 100%; height: 300px; padding: 15px; border: 2px solid #e2e8f0; border-radius: 8px; font-family: monospace; font-size: 0.85rem; resize: vertical;">${content}</textarea>
+                    <div style="margin-top: 15px; display: flex; gap: 10px;">
+                        <button onclick="navigator.clipboard.writeText(this.parentElement.previousElementSibling.value); this.textContent='✅ Copied!'; setTimeout(() => this.textContent='📋 Copy Text', 2000);" style="flex: 1; background: #4f46e5; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer;">📋 Copy Text</button>
+                        <button onclick="this.closest('div').parentElement.remove()" style="background: #64748b; color: white; border: none; padding: 10px 20px; border-radius: 6px; font-weight: 600; cursor: pointer;">Close</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        // Statistics
         function updateStats() {
             let totalTasks = 0;
+            
             document.querySelectorAll('.checkbox-item.completed').forEach(() => {
                 totalTasks++;
             });
+            
+            for (let day = 1; day <= 90; day++) {
+                const customTasks = JSON.parse(appData.load(`custom-tasks-day-${day}`) || '[]');
+                customTasks.forEach(task => {
+                    if (task.completed) totalTasks++;
+                });
+            }
+            
+            let completedTools = 0;
+            for (const era in toolsData) {
+                toolsData[era].forEach(tool => {
+                    if (appData.load(`tool-${tool.id}-completed`) === true) {
+                        completedTools++;
+                        totalTasks++;
+                    }
+                });
+            }
             
             const totalTasksElement = document.getElementById('totalTasks');
             if (totalTasksElement) {
                 totalTasksElement.textContent = totalTasks;
             }
+            
+            const startDate = new Date('2025-08-25');
+            const currentDate = new Date();
+            const daysPassed = Math.max(0, Math.floor((currentDate - startDate) / (1000 * 60 * 60 * 24)));
+            const currentDay = Math.min(90, daysPassed + 1);
+            
+            const currentDayElement = document.getElementById('currentDay');
+            if (currentDayElement) {
+                currentDayElement.textContent = currentDay;
+            }
+            
+            const daysLeft = Math.max(0, 90 - daysPassed);
+            const daysLeftElement = document.getElementById('daysLeft');
+            if (daysLeftElement) {
+                daysLeftElement.textContent = daysLeft;
+            }
+            
+            updateCalendarWithSyncedData();
         }
 
-        function showSuccessMessage(message) {
-            const indicator = document.getElementById('successMessage');
-            if (indicator) {
-                indicator.textContent = message;
-                indicator.classList.add('show');
-                setTimeout(() => {
-                    indicator.classList.remove('show');
-                }, 2000);
+        function updateCalendarWithSyncedData() {
+            for (let day = 1; day <= 90; day++) {
+                const customTasks = JSON.parse(appData.load(`custom-tasks-day-${day}`) || '[]');
+                const dayElement = document.querySelector(`.calendar-day:nth-child(${day + 7})`);
+                
+                if (dayElement) {
+                    // Remove existing indicators
+                    const existingIndicator = dayElement.querySelector('.task-indicator');
+                    const existingGoogleIndicator = dayElement.querySelector('.google-indicator');
+                    
+                    if (existingIndicator) existingIndicator.remove();
+                    if (existingGoogleIndicator) existingGoogleIndicator.remove();
+                    
+                    // Add task indicator if there are custom tasks
+                    if (customTasks.length > 0) {
+                        const indicator = document.createElement('div');
+                        indicator.className = 'task-indicator';
+                        dayElement.appendChild(indicator);
+                    }
+                    
+                    // Add Google indicator if there are Google Calendar events
+                    const hasGoogleEvents = customTasks.some(task => task.source === 'google');
+                    if (hasGoogleEvents) {
+                        const googleIndicator = document.createElement('div');
+                        googleIndicator.className = 'google-indicator';
+                        dayElement.appendChild(googleIndicator);
+                    }
+                }
             }
         }
 
-        function exportToNotion() {
-            const completedTasks = [];
-            
+        // Load saved data and initialize
+        function loadSavedData() {
             ['business', 'health', 'spanish', 'social'].forEach(category => {
-                const progress = calculateCategoryProgress(category);
                 const categorySection = document.getElementById(category);
-                
                 if (categorySection) {
-                    categorySection.querySelectorAll('.checkbox-item.completed').forEach(element => {
+                    categorySection.querySelectorAll('.checkbox-item').forEach(element => {
                         const taskText = element.textContent.trim();
-                        completedTasks.push({
-                            task: taskText,
-                            category: category.toUpperCase()
-                        });
+                        const taskId = `${category}-${taskText.replace(/\s+/g, '-').toLowerCase()}`;
+                        const isCompleted = appData.load(taskId) === true;
+                        
+                        const checkbox = element.querySelector('input[type="checkbox"]');
+                        if (checkbox) {
+                            checkbox.checked = isCompleted;
+                            if (isCompleted) {
+                                element.classList.add('completed');
+                            }
+                        }
                     });
                 }
             });
             
-            const currentDay = getCurrentDayNumber();
-            const progressSummary = {
-                business: calculateCategoryProgress('business'),
-                health: calculateCategoryProgress('health'),
-                spanish: calculateCategoryProgress('spanish'),
-                social: calculateCategoryProgress('social')
-            };
+            const customTools = JSON.parse(appData.load('custom-tools') || '[]');
+            customTools.forEach(tool => {
+                if (!toolsData[tool.era]) {
+                    toolsData[tool.era] = [];
+                }
+                const existingTool = toolsData[tool.era].find(t => t.id === tool.id);
+                if (!existingTool) {
+                    toolsData[tool.era].push(tool);
+                }
+            });
             
-            const notionText = `## 📊 90-Day Launch Progress Export
-**Export Date:** ${new Date().toLocaleDateString()}
-**Launch Day:** ${currentDay} of 90
-
-### 📈 Progress Summary
-- 🏢 **Business:** ${progressSummary.business}%
-- 💪 **Health:** ${progressSummary.health}%
-- 🇪🇸 **Spanish:** ${progressSummary.spanish}%
-- 📱 **Social:** ${progressSummary.social}%
-
-### ✅ Completed Tasks (${completedTasks.length})
-${completedTasks.map(task => `- **${task.category}:** ${task.task}`).join('\n')}
-
-### 📋 Next Steps
-- Continue daily tracking
-- Review progress weekly
-- Adjust goals as needed
-
----
-*Exported from 90-Day Launch Dashboard*`;
-            
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(notionText).then(() => {
-                    showSuccessMessage('📋 Progress copied to clipboard! Paste into Notion.');
-                }).catch(() => {
-                    alert('Export Text:\n\n' + notionText);
-                });
-            } else {
-                alert('Export Text:\n\n' + notionText);
-            }
+            updateAllProgressCircles();
+            updateEraProgress();
+            updateStats();
+            updateStreakCounter();
         }
 
-        // Initialize on page load
+        // Initialize Application
         document.addEventListener('DOMContentLoaded', function() {
-            updateEraProgress();
-            updateAllProgressCircles();
-            updateStats();
-            console.log('🚀 90-Day Launch Dashboard loaded successfully!');
+            generateCalendar();
+            displayTools('launch');
+            loadSavedData();
+            
+            // Initialize Google Calendar integration
+            googleCalendar.initialize();
+            
+            // Auto-save every 30 seconds
+            setInterval(() => {
+                ['business', 'health', 'spanish', 'social'].forEach(category => {
+                    saveProgress(category);
+                });
+            }, 30000);
         });
+
+        // Event Listeners for UI
+        document.addEventListener('click', function(event) {
+            const modals = ['dayModal', 'toolModal', 'addToolModal'];
+            modals.forEach(modalId => {
+                const modal = document.getElementById(modalId);
+                if (modal && event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        });
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const openModal = document.querySelector('.modal[style*="block"]');
+                if (openModal) {
+                    openModal.style.display = 'none';
+                }
+            }
+            
+            if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+                event.preventDefault();
+                ['business', 'health', 'spanish', 'social'].forEach(category => {
+                    saveProgress(category);
+                });
+                appData.showSaveIndicator();
+            }
+        });
+
+        // Touch gestures for mobile
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        document.addEventListener('touchstart', function(event) {
+            touchStartX = event.touches[0].clientX;
+            touchStartY = event.touches[0].clientY;
+        });
+
+        document.addEventListener('touchmove', function(event) {
+            if (!touchStartX || !touchStartY) return;
+            
+            const touchEndX = event.touches[0].clientX;
+            const touchEndY = event.touches[0].clientY;
+            
+            const diffX = touchStartX - touchEndX;
+            const diffY = touchStartY - touchEndY;
+            
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 100) {
+                const tabs = document.querySelectorAll('.tab');
+                const activeTab = document.querySelector('.tab.active');
+                const activeIndex = Array.from(tabs).indexOf(activeTab);
+                
+                if (diffX > 0 && activeIndex < tabs.length - 1) {
+                    tabs[activeIndex + 1].click();
+                } else if (diffX < 0 && activeIndex > 0) {
+                    tabs[activeIndex - 1].click();
+                }
+            }
+            
+            touchStartX = 0;
+            touchStartY = 0;
+        });
+
+        console.log('🚀 90-Day Launch Dashboard with Google Calendar Integration loaded successfully!');
     </script>
 </body>
 </html>
