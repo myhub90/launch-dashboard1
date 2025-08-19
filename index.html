@@ -14,8 +14,47 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Launch Hub">
     
-    <!-- Google Calendar Integration - FIXED VERSION -->
-    <script src="https://apis.google.com/js/api.js"></script>
+    <!-- Google Calendar Integration - FIXED WITH FALLBACKS -->
+    <script>
+        // Try to load Google API with fallback
+        (function() {
+            let apiLoaded = false;
+            let loadAttempts = 0;
+            const maxAttempts = 3;
+            
+            function tryLoadGoogleAPI() {
+                loadAttempts++;
+                console.log(`🔄 Attempting to load Google API (attempt ${loadAttempts}/${maxAttempts})`);
+                
+                const script = document.createElement('script');
+                script.src = 'https://apis.google.com/js/api.js';
+                script.async = true;
+                script.defer = true;
+                
+                script.onload = function() {
+                    console.log('✅ Google API loaded successfully');
+                    apiLoaded = true;
+                    window.googleAPILoaded = true;
+                };
+                
+                script.onerror = function() {
+                    console.error(`❌ Google API load failed (attempt ${loadAttempts})`);
+                    if (loadAttempts < maxAttempts) {
+                        console.log('⏳ Retrying in 2 seconds...');
+                        setTimeout(tryLoadGoogleAPI, 2000);
+                    } else {
+                        console.error('❌ Google API failed to load after all attempts');
+                        window.googleAPIFailed = true;
+                    }
+                };
+                
+                document.head.appendChild(script);
+            }
+            
+            // Start loading Google API
+            tryLoadGoogleAPI();
+        })();
+    </script>
     
     <style>
         * {
@@ -1110,7 +1149,127 @@
                 });
             }
 
-            async connect() {
+            handleAPILoadFailure() {
+                console.error('🚨 Google API Load Failure - Running Diagnostics...');
+                
+                // Show detailed diagnostic information
+                const diagnostics = this.runDiagnostics();
+                
+                this.updateSyncStatus('❌ Google API failed to load. See diagnostics below.', 'error');
+                
+                // Show diagnostic modal
+                this.showDiagnosticModal(diagnostics);
+            }
+
+            runDiagnostics() {
+                const diagnostics = {
+                    userAgent: navigator.userAgent,
+                    online: navigator.onLine,
+                    cookies: navigator.cookieEnabled,
+                    javascript: true, // If we're here, JS is working
+                    thirdPartyCookies: false,
+                    adBlocker: false,
+                    firewall: false
+                };
+
+                // Test for ad blockers (simple check)
+                try {
+                    const testAd = document.createElement('div');
+                    testAd.innerHTML = '&nbsp;';
+                    testAd.className = 'adsbox';
+                    document.body.appendChild(testAd);
+                    setTimeout(() => {
+                        if (testAd.offsetHeight === 0) {
+                            diagnostics.adBlocker = true;
+                        }
+                        document.body.removeChild(testAd);
+                    }, 100);
+                } catch (e) {
+                    // Likely ad blocker
+                    diagnostics.adBlocker = true;
+                }
+
+                return diagnostics;
+            }
+
+            showDiagnosticModal(diagnostics) {
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.8);
+                    z-index: 1000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                `;
+                
+                modal.innerHTML = `
+                    <div style="background: white; border-radius: 15px; padding: 25px; max-width: 600px; max-height: 90vh; overflow-y: auto;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3 style="margin: 0; color: #dc2626;">🚨 Google Calendar Connection Issue</h3>
+                            <button onclick="this.closest('div').parentElement.remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+                        </div>
+                        
+                        <div style="color: #374151; line-height: 1.6;">
+                            <p style="background: #fef2f2; padding: 15px; border-radius: 8px; color: #dc2626; margin-bottom: 20px;">
+                                <strong>Issue:</strong> Google's API script failed to load, which prevents calendar integration.
+                            </p>
+
+                            <h4 style="color: #1f2937; margin-bottom: 15px;">🔍 Possible Causes & Solutions:</h4>
+                            
+                            <div style="margin-bottom: 15px;">
+                                <h5 style="color: #059669; margin-bottom: 8px;">✅ Most Common Fixes:</h5>
+                                <ul style="margin: 0; padding-left: 20px;">
+                                    <li><strong>Ad Blocker:</strong> Disable ad blocker for this site and refresh</li>
+                                    <li><strong>Browser Extensions:</strong> Try in private/incognito mode</li>
+                                    <li><strong>Network Issues:</strong> Check your internet connection</li>
+                                    <li><strong>Firewall/Proxy:</strong> Corporate networks often block Google APIs</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-bottom: 15px;">
+                                <h5 style="color: #dc2626; margin-bottom: 8px;">🔧 Quick Fixes to Try:</h5>
+                                <ol style="margin: 0; padding-left: 20px;">
+                                    <li><strong>Refresh the page</strong> (simplest fix)</li>
+                                    <li><strong>Try a different browser</strong> (Chrome, Firefox, Safari)</li>
+                                    <li><strong>Disable browser extensions</strong> temporarily</li>
+                                    <li><strong>Try from a different network</strong> (mobile hotspot)</li>
+                                    <li><strong>Check if you can access</strong> <a href="https://calendar.google.com" target="_blank">calendar.google.com</a></li>
+                                </ol>
+                            </div>
+
+                            <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                                <h5 style="color: #0369a1; margin-bottom: 8px;">💡 Good News!</h5>
+                                <p style="margin: 0; color: #0c4a6e;">
+                                    <strong>Your dashboard works perfectly without Google Calendar!</strong><br>
+                                    You can still track all your tasks, see progress circles, use the 90-day calendar, and export to Notion. 
+                                    Google Calendar is just a bonus feature.
+                                </p>
+                            </div>
+
+                            <div style="background: #ecfdf5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                                <h5 style="color: #059669; margin-bottom: 8px;">🎯 Alternative Solution:</h5>
+                                <p style="margin: 0; color: #064e3b;">
+                                    Use the <strong>"Export to Notion"</strong> feature to get your progress data, then manually copy important tasks to your Google Calendar. 
+                                    It's just one extra step but gives you the same result!
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
+                            <button onclick="window.location.reload()" style="background: #059669; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; cursor: pointer;">🔄 Refresh Page</button>
+                            <button onclick="this.closest('div').parentElement.remove()" style="background: #6b7280; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; cursor: pointer;">Continue Without Google Calendar</button>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+            }
                 try {
                     // Try to initialize if not already done
                     if (!this.isInitialized) {
@@ -1768,28 +1927,37 @@
             console.log('✅ 90-Day Launch Dashboard loaded successfully!');
         });
 
-        // Fixed Google Calendar initialization with retry logic
+        // Fixed Google Calendar initialization with fallbacks and diagnostics
         function initializeGoogleCalendarWithRetry() {
             let attempts = 0;
-            const maxAttempts = 10;
+            const maxAttempts = 15; // 7.5 seconds total
             
             function tryInitialize() {
                 attempts++;
                 console.log(`🔄 Google Calendar init attempt ${attempts}/${maxAttempts}`);
                 
-                if (typeof gapi !== 'undefined') {
+                // Check if Google API failed to load completely
+                if (window.googleAPIFailed) {
+                    console.error('❌ Google API completely failed to load');
+                    googleCalendar.handleAPILoadFailure();
+                    return;
+                }
+                
+                // Check if Google API is loaded and ready
+                if (window.googleAPILoaded && typeof gapi !== 'undefined') {
                     console.log('✅ Google API loaded, initializing calendar...');
                     googleCalendar.initialize();
                 } else if (attempts < maxAttempts) {
                     console.log('⏳ Waiting for Google API to load...');
                     setTimeout(tryInitialize, 500);
                 } else {
-                    console.error('❌ Google API failed to load after 5 seconds');
-                    googleCalendar.updateSyncStatus('❌ Google API failed to load. Try refreshing the page.', 'error');
+                    console.error('❌ Google API load timeout after 7.5 seconds');
+                    googleCalendar.handleAPILoadFailure();
                 }
             }
             
-            tryInitialize();
+            // Wait a moment for the script loading to start
+            setTimeout(tryInitialize, 1000);
         }
 
         // Event Listeners for UI
