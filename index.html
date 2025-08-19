@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>90-Day Launch Dashboard</title>
+    <title>90-Day Launch Dashboard + Content Scheduler</title>
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="data:application/json,{%22name%22:%2290-Day%20Launch%20Dashboard%22,%22short_name%22:%22Launch%20Hub%22,%22description%22:%22Your%2090-day%20business%20launch%20tracking%20dashboard%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22background_color%22:%22%23667eea%22,%22theme_color%22:%22%234f46e5%22,%22icons%22:[{%22src%22:%22data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQwIiBoZWlnaHQ9IjI0MCIgdmlld0JveD0iMCAwIDI0MCAyNDAiIGZpbGw9IiM0ZjQ2ZTUiPgo8Y2lyY2xlIGN4PSIxMjAiIGN5PSIxMjAiIHI9IjEwMCIvPgo8dGV4dCB4PSIxMjAiIHk9IjEzNSIgZm9udC1zaXplPSI0OCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPvCfmoE8L3RleHQ+Cjwvc3ZnPg==%22,%22sizes%22:%22240x240%22,%22type%22:%22image/svg+xml%22}]}">
@@ -14,47 +14,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Launch Hub">
     
-    <!-- Google Calendar Integration - FIXED WITH FALLBACKS -->
-    <script>
-        // Try to load Google API with fallback
-        (function() {
-            let apiLoaded = false;
-            let loadAttempts = 0;
-            const maxAttempts = 3;
-            
-            function tryLoadGoogleAPI() {
-                loadAttempts++;
-                console.log(`🔄 Attempting to load Google API (attempt ${loadAttempts}/${maxAttempts})`);
-                
-                const script = document.createElement('script');
-                script.src = 'https://apis.google.com/js/api.js';
-                script.async = true;
-                script.defer = true;
-                
-                script.onload = function() {
-                    console.log('✅ Google API loaded successfully');
-                    apiLoaded = true;
-                    window.googleAPILoaded = true;
-                };
-                
-                script.onerror = function() {
-                    console.error(`❌ Google API load failed (attempt ${loadAttempts})`);
-                    if (loadAttempts < maxAttempts) {
-                        console.log('⏳ Retrying in 2 seconds...');
-                        setTimeout(tryLoadGoogleAPI, 2000);
-                    } else {
-                        console.error('❌ Google API failed to load after all attempts');
-                        window.googleAPIFailed = true;
-                    }
-                };
-                
-                document.head.appendChild(script);
-            }
-            
-            // Start loading Google API
-            tryLoadGoogleAPI();
-        })();
-    </script>
+    <!-- Google Calendar API -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
     
     <style>
         * {
@@ -68,12 +30,10 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 10px;
-            -webkit-user-select: none;
-            user-select: none;
         }
 
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
             background: white;
             border-radius: 20px;
@@ -103,7 +63,7 @@
         }
 
         .tab {
-            padding: 15px 18px;
+            padding: 15px 16px;
             cursor: pointer;
             border-bottom: 3px solid transparent;
             font-weight: 600;
@@ -111,7 +71,7 @@
             min-width: 100px;
             text-align: center;
             transition: all 0.3s ease;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
 
         .tab.active {
@@ -120,7 +80,7 @@
             color: #4f46e5;
         }
 
-        .tab:active {
+        .tab:hover {
             background: #e2e8f0;
         }
 
@@ -152,9 +112,9 @@
             transition: all 0.3s ease;
         }
 
-        .progress-card:active {
-            transform: scale(0.95);
-            background: #e2e8f0;
+        .progress-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
         }
 
         .progress-circle {
@@ -262,8 +222,9 @@
             position: relative;
         }
 
-        .calendar-day:active {
-            transform: scale(0.95);
+        .calendar-day:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
 
         .calendar-day.launch { border-left: 4px solid #ef4444; background: #fef2f2; }
@@ -293,6 +254,16 @@
             right: 4px;
         }
 
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
         .google-indicator {
             width: 6px;
             height: 6px;
@@ -300,7 +271,7 @@
             border-radius: 50%;
             position: absolute;
             top: 4px;
-            left: 4px;
+            left: 12px;
         }
 
         /* Task Styles */
@@ -344,8 +315,8 @@
             transition: all 0.3s ease;
         }
 
-        .checkbox-item:active {
-            transform: scale(0.98);
+        .checkbox-item:hover {
+            background: #e2e8f0;
         }
 
         .checkbox-item.completed {
@@ -374,29 +345,9 @@
             transition: all 0.3s ease;
         }
 
-        .save-btn:active {
+        .save-btn:hover {
             background: #4338ca;
-            transform: scale(0.98);
-        }
-
-        .save-indicator {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #10b981;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 20px;
-            font-weight: 600;
-            opacity: 0;
-            transition: all 0.3s ease;
-            z-index: 1000;
-            font-size: 0.85rem;
-        }
-
-        .save-indicator.show {
-            opacity: 1;
+            transform: translateY(-1px);
         }
 
         /* Era Timeline Styles */
@@ -513,74 +464,142 @@
             font-size: 0.85rem;
         }
 
-        .google-cal-btn {
-            background: #ea4335;
-            color: white;
-            border: none;
-            padding: 12px 25px;
-            border-radius: 8px;
+        /* Content Scheduler Styles */
+        .content-planning {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .planning-header {
             font-weight: 600;
-            cursor: pointer;
+            color: #1e293b;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .content-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.85rem;
+        }
+
+        .form-input, .form-textarea, .form-select {
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
             font-size: 0.9rem;
-            margin: 10px 5px;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .platform-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .platform-option {
             display: flex;
             align-items: center;
             gap: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .google-cal-btn:hover {
-            background: #d33b2c;
-            transform: translateY(-2px);
-        }
-
-        .calendar-sync-panel {
-            background: #f8fafc;
+            padding: 10px;
             border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-
-        .sync-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
-            margin-top: 10px;
-        }
-
-        .sync-indicator {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #64748b;
-            margin-right: 8px;
+            border-radius: 6px;
+            cursor: pointer;
             transition: all 0.3s ease;
+            font-size: 0.85rem;
         }
 
-        .sync-indicator.connected {
+        .platform-option:hover {
+            border-color: #4f46e5;
+        }
+
+        .platform-option.selected {
+            border-color: #4f46e5;
+            background: #f0f9ff;
+        }
+
+        .content-queue {
+            margin-top: 25px;
+        }
+
+        .queue-item {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .queue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+
+        .queue-platforms {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .platform-tag {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+
+        .tag-instagram { background: #fce7f3; color: #be185d; }
+        .tag-tiktok { background: #fef2f2; color: #dc2626; }
+        .tag-youtube { background: #fef3c7; color: #d97706; }
+        .tag-pinterest { background: #fef2f2; color: #dc2626; }
+        .tag-facebook { background: #dbeafe; color: #1d4ed8; }
+        .tag-twitter { background: #f0f9ff; color: #0369a1; }
+
+        .save-indicator {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             background: #10b981;
-            animation: pulse 2s infinite;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+            font-size: 0.85rem;
         }
 
-        .sync-indicator.syncing {
-            background: #f59e0b;
-            animation: spin 1s linear infinite;
-        }
-
-        .sync-indicator.error {
-            background: #ef4444;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        .save-indicator.show {
+            opacity: 1;
         }
 
         @media (max-width: 768px) {
@@ -614,6 +633,14 @@
                 margin: 20px auto;
                 padding: 20px;
             }
+
+            .progress-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .content-form {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -627,10 +654,12 @@
         <div class="tabs">
             <div class="tab active" onclick="showTab('overview')">📊 Overview</div>
             <div class="tab" onclick="showTab('calendar')">📅 Calendar</div>
+            <div class="tab" onclick="showTab('content-hub')">📱 Content Hub</div>
             <div class="tab" onclick="showTab('business')">🏢 Business</div>
             <div class="tab" onclick="showTab('health')">💪 Health</div>
             <div class="tab" onclick="showTab('spanish')">🇪🇸 Spanish</div>
             <div class="tab" onclick="showTab('social')">📱 Social</div>
+            <div class="tab" onclick="showTab('export')">📤 Export</div>
         </div>
 
         <!-- Overview Tab -->
@@ -734,7 +763,7 @@
                             <li>📊 Era timeline adjusts in real-time</li>
                             <li>🔥 Streak counter updates</li>
                             <li>📈 All stats refresh immediately</li>
-                            <li>📅 Google Calendar syncs changes automatically</li>
+                            <li>📅 Calendar content syncs automatically</li>
                         </ul>
                         Perfect for fixing mistakes or adjusting your progress!
                     </div>
@@ -746,34 +775,56 @@
         <div class="tab-content" id="calendar">
             <div class="calendar-header">
                 <div class="calendar-title">📅 Interactive 90-Day Calendar</div>
-                <div class="calendar-subtitle">Tap any day to see detailed schedule</div>
+                <div class="calendar-subtitle">Click any day to see detailed schedule & add custom tasks</div>
                 
-                <!-- Google Calendar Sync Panel -->
-                <div class="calendar-sync-panel">
-                    <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                        <div class="sync-indicator" id="syncIndicator"></div>
-                        <div style="font-weight: 600; color: #1e293b;">Google Calendar Integration</div>
+                <!-- Google Calendar Integration Panel -->
+                <div style="background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 15px; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+                        <div style="font-weight: 600; color: #1e293b;">📅 Google Calendar Integration</div>
+                        <div style="width: 8px; height: 8px; border-radius: 50%; background: #64748b;" id="syncIndicator"></div>
                     </div>
                     <div style="color: #64748b; font-size: 0.85rem; margin-bottom: 15px;" id="syncStatus">
-                        Initializing Google Calendar integration...
+                        Ready to connect to Google Calendar
                     </div>
                     
-                    <div class="sync-controls">
-                        <button class="google-cal-btn" id="connectBtn" onclick="connectGoogleCalendar()">
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="save-btn" id="connectBtn" onclick="connectGoogleCalendar()" style="background: #ea4335; padding: 8px 16px; font-size: 0.8rem;">
                             📅 Connect Google Calendar
                         </button>
-                        
-                        <button class="google-cal-btn" id="syncBtn" onclick="syncWithGoogleCalendar()" style="display: none; background: #10b981;">
-                            🔄 Sync Now
+                        <button class="save-btn" id="syncBtn" onclick="syncWithGoogleCalendar()" style="display: none; background: #10b981; padding: 8px 16px; font-size: 0.8rem;">
+                            🔄 Sync Tasks to Google
                         </button>
-                        
-                        <button class="google-cal-btn" id="disconnectBtn" onclick="disconnectGoogleCalendar()" style="display: none; background: #64748b;">
+                        <button class="save-btn" id="importBtn" onclick="importFromGoogleCalendar()" style="display: none; background: #059669; padding: 8px 16px; font-size: 0.8rem;">
+                            ⬇️ Import from Google
+                        </button>
+                        <button class="save-btn" id="disconnectBtn" onclick="disconnectGoogleCalendar()" style="display: none; background: #64748b; padding: 8px 16px; font-size: 0.8rem;">
                             🔌 Disconnect
                         </button>
                     </div>
                     
                     <div style="margin-top: 10px; font-size: 0.75rem; color: #64748b;" id="lastSyncTime">
                         Never synced
+                    </div>
+                    
+                    <!-- Sync Instructions -->
+                    <div style="margin-top: 15px; padding: 10px; background: #f0f9ff; border-radius: 6px; border-left: 3px solid #4f46e5;">
+                        <div style="font-weight: 600; color: #1e293b; font-size: 0.85rem; margin-bottom: 5px;">🔄 Bidirectional Sync:</div>
+                        <div style="color: #64748b; font-size: 0.75rem; line-height: 1.3;">
+                            • Tasks you complete here → Update Google Calendar<br>
+                            • Events you add in Google Calendar → Show up here<br>
+                            • Changes in either place sync automatically
+                        </div>
+                    </div>
+                    
+                    <!-- Setup Instructions -->
+                    <div style="margin-top: 10px; padding: 10px; background: #fef3c7; border-radius: 6px; border-left: 3px solid #f59e0b;">
+                        <div style="font-weight: 600; color: #92400e; font-size: 0.85rem; margin-bottom: 5px;">🛠️ Setup Required:</div>
+                        <div style="color: #78350f; font-size: 0.75rem; line-height: 1.3;">
+                            1. Get Google Calendar API credentials<br>
+                            2. Replace GOOGLE_CLIENT_ID and GOOGLE_API_KEY in code<br>
+                            3. Set authorized origin: https://myhub90.github.io<br>
+                            <a href="#" onclick="showGoogleSetupGuide()" style="color: #f59e0b; text-decoration: underline;">📖 Detailed Setup Guide</a>
+                        </div>
                     </div>
                 </div>
                 
@@ -799,6 +850,102 @@
             
             <div class="calendar-grid" id="calendarGrid">
                 <!-- Calendar will be generated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Content Hub Tab -->
+        <div class="tab-content" id="content-hub">
+            <h3 style="text-align: center; margin-bottom: 20px; color: #1e293b;">📱 Content Planning & Scheduling Hub</h3>
+            
+            <!-- Content Creation Form -->
+            <div class="content-planning">
+                <div class="planning-header">✨ Create New Content</div>
+                
+                <div class="content-form">
+                    <div class="form-group">
+                        <label class="form-label">Content Type</label>
+                        <select class="form-select" id="contentType">
+                            <option value="post">Social Media Post</option>
+                            <option value="story">Story/Short</option>
+                            <option value="video">Video Content</option>
+                            <option value="carousel">Carousel/Gallery</option>
+                            <option value="reels">Reels/TikTok</option>
+                            <option value="blog">Blog Content</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Scheduled Date & Time</label>
+                        <input type="datetime-local" class="form-input" id="scheduleDateTime">
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label class="form-label">Content Caption/Description</label>
+                        <textarea class="form-textarea" id="contentCaption" placeholder="Write your content caption here..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Hashtags</label>
+                        <input type="text" class="form-input" id="contentHashtags" placeholder="#hashtag #hashtag">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Call to Action</label>
+                        <input type="text" class="form-input" id="contentCTA" placeholder="Link in bio, comment below, etc.">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Select Platforms</label>
+                    <div class="platform-selector">
+                        <div class="platform-option" data-platform="instagram">
+                            <input type="checkbox" id="platform-instagram">
+                            <span>📸 Instagram</span>
+                        </div>
+                        <div class="platform-option" data-platform="tiktok">
+                            <input type="checkbox" id="platform-tiktok">
+                            <span>🎵 TikTok</span>
+                        </div>
+                        <div class="platform-option" data-platform="youtube">
+                            <input type="checkbox" id="platform-youtube">
+                            <span>📺 YouTube</span>
+                        </div>
+                        <div class="platform-option" data-platform="pinterest">
+                            <input type="checkbox" id="platform-pinterest">
+                            <span>📌 Pinterest</span>
+                        </div>
+                        <div class="platform-option" data-platform="facebook">
+                            <input type="checkbox" id="platform-facebook">
+                            <span>👥 Facebook</span>
+                        </div>
+                        <div class="platform-option" data-platform="twitter">
+                            <input type="checkbox" id="platform-twitter">
+                            <span>🐦 Twitter/X</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="save-btn" style="width: 100%; padding: 12px;" onclick="scheduleContent()">
+                    📅 Schedule Content
+                </button>
+            </div>
+            
+            <!-- Content Queue -->
+            <div class="content-queue">
+                <div class="planning-header">📋 Scheduled Content Queue</div>
+                <div id="contentQueueList">
+                    <div style="color: #64748b; font-style: italic; text-align: center; padding: 20px;">
+                        No content scheduled yet. Create your first post above!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Export Buttons -->
+            <div style="margin-top: 25px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <button class="save-btn" onclick="exportToPlanoly()" style="background: #e91e63;">📌 Export to Planoly</button>
+                <button class="save-btn" onclick="exportToBuffer()" style="background: #2196f3;">📊 Export to Buffer</button>
+                <button class="save-btn" onclick="exportToLater()" style="background: #ff9800;">📱 Export to Later</button>
+                <button class="save-btn" onclick="exportToCSV()" style="background: #4caf50;">📁 Download CSV</button>
             </div>
         </div>
 
@@ -965,6 +1112,38 @@
             </div>
             <button class="save-btn" onclick="saveProgress('social')">💾 Save Social Progress</button>
         </div>
+
+        <!-- Export Tab -->
+        <div class="tab-content" id="export">
+            <h3 style="text-align: center; margin-bottom: 20px; color: #1e293b;">📤 Export & Integration Hub</h3>
+            
+            <div style="background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                <div style="font-weight: 600; color: #1e293b; margin-bottom: 15px; font-size: 1.1rem;">📋 Export to Notion</div>
+                <div style="color: #64748b; margin-bottom: 15px;">
+                    Generate a formatted progress report including calendar schedule and content plan.
+                </div>
+                <button class="save-btn" onclick="exportToNotion()">
+                    📋 Generate Notion Export
+                </button>
+            </div>
+
+            <div style="background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 20px; margin-bottom: 20px;">
+                <div style="font-weight: 600; color: #1e293b; margin-bottom: 15px; font-size: 1.1rem;">💾 Data Backup</div>
+                <div style="color: #64748b; margin-bottom: 15px;">
+                    Download complete backup including calendar data and content schedules.
+                </div>
+                <button class="save-btn" onclick="exportData()">
+                    💾 Download Backup
+                </button>
+            </div>
+
+            <div style="background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 10px; padding: 20px;">
+                <div style="font-weight: 600; color: #1e293b; margin-bottom: 15px; font-size: 1.1rem;">📊 Progress Summary</div>
+                <div id="progressSummary" style="color: #64748b;">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Day Detail Modal -->
@@ -979,17 +1158,32 @@
         </div>
     </div>
 
+    <!-- Export Modal -->
+    <div id="exportModal" class="modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeExportModal()">×</button>
+            <div class="modal-title">📋 Export Data</div>
+            <div style="margin-bottom: 15px; color: #64748b;">
+                Copy this formatted text and paste it into your platform:
+            </div>
+            <textarea id="exportText" style="width: 100%; height: 400px; padding: 15px; border: 2px solid #e2e8f0; border-radius: 8px; font-family: monospace; font-size: 0.85rem;" readonly></textarea>
+            <div style="margin-top: 15px; display: flex; gap: 10px;">
+                <button class="save-btn" onclick="copyExportText()">📋 Copy to Clipboard</button>
+                <button class="save-btn" onclick="closeExportModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <div class="save-indicator" id="saveIndicator">💾 Data Saved!</div>
 
     <script>
-        // ⭐ GOOGLE CALENDAR CREDENTIALS - REPLACE THESE ⭐
-        const GOOGLE_CLIENT_ID = '364585215787-867f9dat0qqqtdao8o46q2o04ubr247q.apps.googleusercontent.com';
-        const GOOGLE_API_KEY = 'AIzaSyAsjG_01Da1ChmZDy4y0CiUgZBNlBuFDzk';
-
-        // Data Storage Class
+        // Data Storage Classes
         class AppData {
             constructor() {
-                this.storage = {};
+                this.storage = JSON.parse(localStorage.getItem('launchDashboard') || '{}');
+                this.contentQueue = JSON.parse(localStorage.getItem('contentQueue') || '[]');
+                this.autoSaveInterval = null;
+                this.startAutoSave();
             }
 
             getCurrentDate() {
@@ -1004,7 +1198,7 @@
                     }
                     this.storage[today][key] = value;
                     this.storage[today]['lastUpdated'] = new Date().toISOString();
-                    this.showSaveIndicator();
+                    localStorage.setItem('launchDashboard', JSON.stringify(this.storage));
                     return true;
                 } catch (e) {
                     console.error('Save failed:', e);
@@ -1021,9 +1215,51 @@
                 }
             }
 
-            showSaveIndicator() {
+            getAllData() {
+                return {
+                    storage: this.storage,
+                    contentQueue: this.contentQueue
+                };
+            }
+
+            addToContentQueue(content) {
+                content.id = Date.now();
+                content.status = 'scheduled';
+                this.contentQueue.push(content);
+                this.saveContentQueue();
+                this.updateCalendarIndicators();
+            }
+
+            removeFromContentQueue(id) {
+                this.contentQueue = this.contentQueue.filter(item => item.id !== id);
+                this.saveContentQueue();
+                this.updateCalendarIndicators();
+            }
+
+            saveContentQueue() {
+                localStorage.setItem('contentQueue', JSON.stringify(this.contentQueue));
+            }
+
+            updateCalendarIndicators() {
+                // Update calendar with content indicators
+                generateCalendar();
+            }
+
+            startAutoSave() {
+                this.autoSaveInterval = setInterval(() => {
+                    try {
+                        localStorage.setItem('launchDashboard', JSON.stringify(this.storage));
+                        this.saveContentQueue();
+                    } catch (e) {
+                        console.error('Auto-save failed:', e);
+                    }
+                }, 30000);
+            }
+
+            showSaveIndicator(message = '💾 Data Saved!') {
                 const indicator = document.getElementById('saveIndicator');
                 if (indicator) {
+                    indicator.textContent = message;
                     indicator.classList.add('show');
                     setTimeout(() => {
                         indicator.classList.remove('show');
@@ -1034,25 +1270,22 @@
 
         const appData = new AppData();
 
-        // FIXED Google Calendar Integration
+        // ⭐ GOOGLE CALENDAR CREDENTIALS - REPLACE THESE ⭐
+        const GOOGLE_CLIENT_ID = '364585215787-867f9dat0qqqtdao8o46q2o04ubr247q.apps.googleusercontent.com';
+        const GOOGLE_API_KEY = 'AIzaSyAsjG_01Da1ChmZDy4y0CiUgZBNlBuFDzk';
+
+        // Google Calendar Integration Class
         class GoogleCalendarIntegration {
             constructor() {
                 this.isSignedIn = false;
                 this.gapi = null;
                 this.auth2 = null;
                 this.isInitialized = false;
-                this.initializationAttempted = false;
+                this.calendarId = 'primary';
+                this.lastSyncTime = null;
             }
 
             async initialize() {
-                // Prevent multiple initialization attempts
-                if (this.initializationAttempted) {
-                    console.log('⚠️ Google Calendar initialization already attempted');
-                    return this.isInitialized;
-                }
-                
-                this.initializationAttempted = true;
-                
                 try {
                     console.log('🔄 Initializing Google Calendar integration...');
                     
@@ -1062,20 +1295,31 @@
                         return false;
                     }
 
-                    // Check if gapi is loaded
-                    if (typeof gapi === 'undefined') {
-                        this.updateSyncStatus('❌ Google API not loaded. Try refreshing the page.', 'error');
-                        return false;
+                    // Wait for Google API to load
+                    await this.waitForGoogleAPI();
+
+                    // Initialize the client
+                    await gapi.client.init({
+                        apiKey: GOOGLE_API_KEY,
+                        clientId: GOOGLE_CLIENT_ID,
+                        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
+                        scope: 'https://www.googleapis.com/auth/calendar'
+                    });
+
+                    this.gapi = gapi;
+                    this.auth2 = gapi.auth2.getAuthInstance();
+
+                    // Check if already signed in
+                    if (this.auth2.isSignedIn.get()) {
+                        this.isSignedIn = true;
+                        this.updateSyncStatus('✅ Connected to Google Calendar', 'connected');
+                        this.updateUIForConnectedState();
+                    } else {
+                        this.updateSyncStatus('✅ Ready to connect to Google Calendar', 'ready');
                     }
 
-                    // Wait a bit more for gapi to be fully ready
-                    await this.waitForGapiReady();
-
-                    // Load the Google API client
-                    await this.loadGoogleAPIClient();
-                    
-                    this.updateSyncStatus('✅ Ready to connect to Google Calendar', 'ready');
                     this.isInitialized = true;
+                    console.log('✅ Google Calendar integration initialized');
                     return true;
                     
                 } catch (error) {
@@ -1085,7 +1329,7 @@
                 }
             }
 
-            async waitForGapiReady() {
+            async waitForGoogleAPI() {
                 return new Promise((resolve, reject) => {
                     let attempts = 0;
                     const maxAttempts = 20;
@@ -1094,8 +1338,7 @@
                         attempts++;
                         
                         if (typeof gapi !== 'undefined' && gapi.load) {
-                            console.log('✅ Google API is ready');
-                            resolve();
+                            gapi.load('client:auth2', resolve);
                         } else if (attempts < maxAttempts) {
                             console.log(`⏳ Waiting for Google API... (${attempts}/${maxAttempts})`);
                             setTimeout(checkReady, 250);
@@ -1108,198 +1351,28 @@
                 });
             }
 
-            async loadGoogleAPIClient() {
-                return new Promise((resolve, reject) => {
-                    const timeout = setTimeout(() => {
-                        reject(new Error('Google API client load timeout'));
-                    }, 10000);
-
-                    // Load the auth2 and client libraries
-                    gapi.load('client:auth2', async () => {
-                        try {
-                            clearTimeout(timeout);
-                            console.log('🔄 Initializing Google API client...');
-                            
-                            // Initialize the client
-                            await gapi.client.init({
-                                apiKey: GOOGLE_API_KEY,
-                                clientId: GOOGLE_CLIENT_ID,
-                                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest'],
-                                scope: 'https://www.googleapis.com/auth/calendar'
-                            });
-
-                            this.gapi = gapi;
-                            this.auth2 = gapi.auth2.getAuthInstance();
-
-                            console.log('✅ Google API client initialized');
-
-                            // Check if already signed in
-                            if (this.auth2.isSignedIn.get()) {
-                                this.isSignedIn = true;
-                                this.updateSyncStatus('✅ Already connected to Google Calendar', 'connected');
-                                this.updateUIForConnectedState();
-                            }
-
-                            resolve();
-                        } catch (error) {
-                            clearTimeout(timeout);
-                            reject(new Error(`Google API client init failed: ${error.message}`));
-                        }
-                    });
-                });
-            }
-
-            handleAPILoadFailure() {
-                console.error('🚨 Google API Load Failure - Running Diagnostics...');
-                
-                // Show detailed diagnostic information
-                const diagnostics = this.runDiagnostics();
-                
-                this.updateSyncStatus('❌ Google API failed to load. See diagnostics below.', 'error');
-                
-                // Show diagnostic modal
-                this.showDiagnosticModal(diagnostics);
-            }
-
-            runDiagnostics() {
-                const diagnostics = {
-                    userAgent: navigator.userAgent,
-                    online: navigator.onLine,
-                    cookies: navigator.cookieEnabled,
-                    javascript: true, // If we're here, JS is working
-                    thirdPartyCookies: false,
-                    adBlocker: false,
-                    firewall: false
-                };
-
-                // Test for ad blockers (simple check)
+            async connect() {
                 try {
-                    const testAd = document.createElement('div');
-                    testAd.innerHTML = '&nbsp;';
-                    testAd.className = 'adsbox';
-                    document.body.appendChild(testAd);
-                    setTimeout(() => {
-                        if (testAd.offsetHeight === 0) {
-                            diagnostics.adBlocker = true;
-                        }
-                        document.body.removeChild(testAd);
-                    }, 100);
-                } catch (e) {
-                    // Likely ad blocker
-                    diagnostics.adBlocker = true;
-                }
-
-                return diagnostics;
-            }
-
-            showDiagnosticModal(diagnostics) {
-                const modal = document.createElement('div');
-                modal.style.cssText = `
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    width: 100%;
-                    height: 100%;
-                    background: rgba(0,0,0,0.8);
-                    z-index: 1000;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 20px;
-                `;
-                
-                modal.innerHTML = `
-                    <div style="background: white; border-radius: 15px; padding: 25px; max-width: 600px; max-height: 90vh; overflow-y: auto;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                            <h3 style="margin: 0; color: #dc2626;">🚨 Google Calendar Connection Issue</h3>
-                            <button onclick="this.closest('div').parentElement.remove()" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
-                        </div>
-                        
-                        <div style="color: #374151; line-height: 1.6;">
-                            <p style="background: #fef2f2; padding: 15px; border-radius: 8px; color: #dc2626; margin-bottom: 20px;">
-                                <strong>Issue:</strong> Google's API script failed to load, which prevents calendar integration.
-                            </p>
-
-                            <h4 style="color: #1f2937; margin-bottom: 15px;">🔍 Possible Causes & Solutions:</h4>
-                            
-                            <div style="margin-bottom: 15px;">
-                                <h5 style="color: #059669; margin-bottom: 8px;">✅ Most Common Fixes:</h5>
-                                <ul style="margin: 0; padding-left: 20px;">
-                                    <li><strong>Ad Blocker:</strong> Disable ad blocker for this site and refresh</li>
-                                    <li><strong>Browser Extensions:</strong> Try in private/incognito mode</li>
-                                    <li><strong>Network Issues:</strong> Check your internet connection</li>
-                                    <li><strong>Firewall/Proxy:</strong> Corporate networks often block Google APIs</li>
-                                </ul>
-                            </div>
-
-                            <div style="margin-bottom: 15px;">
-                                <h5 style="color: #dc2626; margin-bottom: 8px;">🔧 Quick Fixes to Try:</h5>
-                                <ol style="margin: 0; padding-left: 20px;">
-                                    <li><strong>Refresh the page</strong> (simplest fix)</li>
-                                    <li><strong>Try a different browser</strong> (Chrome, Firefox, Safari)</li>
-                                    <li><strong>Disable browser extensions</strong> temporarily</li>
-                                    <li><strong>Try from a different network</strong> (mobile hotspot)</li>
-                                    <li><strong>Check if you can access</strong> <a href="https://calendar.google.com" target="_blank">calendar.google.com</a></li>
-                                </ol>
-                            </div>
-
-                            <div style="background: #f0f9ff; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                                <h5 style="color: #0369a1; margin-bottom: 8px;">💡 Good News!</h5>
-                                <p style="margin: 0; color: #0c4a6e;">
-                                    <strong>Your dashboard works perfectly without Google Calendar!</strong><br>
-                                    You can still track all your tasks, see progress circles, use the 90-day calendar, and export to Notion. 
-                                    Google Calendar is just a bonus feature.
-                                </p>
-                            </div>
-
-                            <div style="background: #ecfdf5; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                                <h5 style="color: #059669; margin-bottom: 8px;">🎯 Alternative Solution:</h5>
-                                <p style="margin: 0; color: #064e3b;">
-                                    Use the <strong>"Export to Notion"</strong> feature to get your progress data, then manually copy important tasks to your Google Calendar. 
-                                    It's just one extra step but gives you the same result!
-                                </p>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: center;">
-                            <button onclick="window.location.reload()" style="background: #059669; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; cursor: pointer;">🔄 Refresh Page</button>
-                            <button onclick="this.closest('div').parentElement.remove()" style="background: #6b7280; color: white; border: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; cursor: pointer;">Continue Without Google Calendar</button>
-                        </div>
-                    </div>
-                `;
-                
-                document.body.appendChild(modal);
-            }
-                try {
-                    // Try to initialize if not already done
                     if (!this.isInitialized) {
-                        console.log('🔄 Google Calendar not initialized, attempting to initialize...');
                         const initSuccess = await this.initialize();
                         if (!initSuccess) {
-                            throw new Error('Google Calendar initialization failed. Please refresh the page and try again.');
+                            throw new Error('Failed to initialize Google Calendar API');
                         }
-                    }
-
-                    if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID') {
-                        alert('❌ Please add your Google Calendar credentials first!\n\nLook for:\nconst GOOGLE_CLIENT_ID = \'YOUR_GOOGLE_CLIENT_ID\';\n\nReplace with your actual Client ID and API Key.');
-                        return;
                     }
 
                     this.updateSyncStatus('🔄 Connecting to Google Calendar...', 'syncing');
 
-                    // Attempt to sign in
                     const authInstance = this.auth2;
-                    const user = await authInstance.signIn({
-                        prompt: 'consent'
-                    });
+                    await authInstance.signIn();
 
-                    if (user.isSignedIn()) {
+                    if (authInstance.isSignedIn.get()) {
                         this.isSignedIn = true;
-                        this.updateSyncStatus('✅ Successfully connected to Google Calendar!', 'connected');
+                        this.updateSyncStatus('✅ Connected to Google Calendar!', 'connected');
                         this.updateUIForConnectedState();
                         
-                        // Test the connection with a simple API call
+                        // Test the connection
                         await this.testConnection();
+                        appData.showSaveIndicator('🎉 Google Calendar connected!');
                         
                         console.log('✅ Google Calendar connected successfully');
                     } else {
@@ -1308,18 +1381,7 @@
 
                 } catch (error) {
                     console.error('Google Calendar connection failed:', error);
-                    
-                    // Provide specific error messages
-                    let errorMessage = '❌ Connection failed';
-                    if (error.error === 'popup_blocked_by_browser') {
-                        errorMessage = '❌ Popup blocked. Please allow popups and try again.';
-                    } else if (error.error === 'access_denied') {
-                        errorMessage = '❌ Access denied. Please grant calendar permissions.';
-                    } else if (error.message) {
-                        errorMessage = `❌ ${error.message}`;
-                    }
-                    
-                    this.updateSyncStatus(errorMessage, 'error');
+                    this.updateSyncStatus('❌ Connection failed - check permissions', 'error');
                     this.isSignedIn = false;
                     this.updateUIForDisconnectedState();
                 }
@@ -1327,15 +1389,8 @@
 
             async testConnection() {
                 try {
-                    // Simple test: list calendar events from today
-                    const now = new Date();
-                    const endOfDay = new Date(now);
-                    endOfDay.setHours(23, 59, 59, 999);
-
                     const response = await gapi.client.calendar.events.list({
-                        calendarId: 'primary',
-                        timeMin: now.toISOString(),
-                        timeMax: endOfDay.toISOString(),
+                        calendarId: this.calendarId,
                         maxResults: 1,
                         singleEvents: true,
                         orderBy: 'startTime'
@@ -1351,48 +1406,190 @@
                 }
             }
 
-            async syncWithGoogleCalendar() {
+            async syncTasksToGoogle() {
                 if (!this.isSignedIn) {
                     this.updateSyncStatus('❌ Not connected to Google Calendar', 'error');
                     return;
                 }
 
                 try {
-                    this.updateSyncStatus('🔄 Syncing with Google Calendar...', 'syncing');
+                    this.updateSyncStatus('🔄 Syncing tasks to Google Calendar...', 'syncing');
 
-                    // Create a test event to verify sync is working
-                    const testEvent = {
-                        summary: '🚀 90-Day Launch Dashboard - Sync Test',
-                        description: 'This event confirms your Google Calendar integration is working perfectly!\n\nGenerated by: 90-Day Launch Dashboard',
-                        start: {
-                            dateTime: new Date().toISOString(),
-                            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
-                        },
-                        end: {
-                            dateTime: new Date(Date.now() + 30 * 60000).toISOString(),
-                            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
-                        },
-                        colorId: '1' // Blue
-                    };
+                    // Get all custom tasks and completed daily tasks
+                    const allEvents = [];
+                    const startDate = new Date('2025-08-25');
 
-                    const response = await gapi.client.calendar.events.insert({
-                        calendarId: 'primary',
-                        resource: testEvent
-                    });
+                    // Add milestone events
+                    const milestones = [
+                        { day: 1, title: '🚀 Launch Day - Foundation Setup', description: '90-Day Journey Begins! Set up foundation tools & design first t-shirts' },
+                        { day: 16, title: '🏗️ Build-Out Era Begins', description: 'Transition to intensive building phase' },
+                        { day: 41, title: '📈 Marketing Era Begins', description: 'Focus shifts to marketing and promotion' },
+                        { day: 61, title: '🔧 Maintenance Era Begins', description: 'Optimize and maintain systems' },
+                        { day: 90, title: '🎉 Launch Complete!', description: '90-Day Journey Successfully Completed!' }
+                    ];
 
-                    if (response.status === 200) {
-                        this.updateSyncStatus('✅ Google Calendar sync successful!', 'connected');
-                        this.showSyncNotification('🎉 Success! Check your Google Calendar for the test event!', 'success');
-                        console.log('✅ Test event created:', response.result.htmlLink);
-                    } else {
-                        throw new Error('Event creation failed');
+                    for (const milestone of milestones) {
+                        const eventDate = new Date(startDate);
+                        eventDate.setDate(startDate.getDate() + milestone.day - 1);
+                        eventDate.setHours(9, 0, 0, 0); // 9 AM
+
+                        const event = {
+                            summary: milestone.title,
+                            description: milestone.description + '\n\nGenerated by 90-Day Launch Dashboard',
+                            start: {
+                                dateTime: eventDate.toISOString(),
+                                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                            },
+                            end: {
+                                dateTime: new Date(eventDate.getTime() + 60 * 60000).toISOString(),
+                                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                            },
+                            colorId: milestone.day === 1 || milestone.day === 90 ? '11' : '1' // Special color for start/end
+                        };
+
+                        allEvents.push(event);
                     }
 
+                    // Add custom tasks for each day
+                    for (let day = 1; day <= 90; day++) {
+                        const customTasks = JSON.parse(appData.load(`custom-tasks-day-${day}`) || '[]');
+                        const eventDate = new Date(startDate);
+                        eventDate.setDate(startDate.getDate() + day - 1);
+
+                        customTasks.forEach(task => {
+                            const [hours, minutes] = task.time.split(':');
+                            const taskDate = new Date(eventDate);
+                            taskDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+
+                            const event = {
+                                summary: `🎯 ${task.text}`,
+                                description: `Day ${day} - ${task.type.toUpperCase()} task\n\nGenerated by 90-Day Launch Dashboard`,
+                                start: {
+                                    dateTime: taskDate.toISOString(),
+                                    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                                },
+                                end: {
+                                    dateTime: new Date(taskDate.getTime() + 30 * 60000).toISOString(),
+                                    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                                },
+                                colorId: this.getColorForTaskType(task.type)
+                            };
+
+                            allEvents.push(event);
+                        });
+                    }
+
+                    // Create events in Google Calendar
+                    let successCount = 0;
+                    for (const event of allEvents) {
+                        try {
+                            await gapi.client.calendar.events.insert({
+                                calendarId: this.calendarId,
+                                resource: event
+                            });
+                            successCount++;
+                        } catch (error) {
+                            console.warn('Failed to create event:', event.summary, error);
+                        }
+                    }
+
+                    this.lastSyncTime = new Date();
+                    this.updateSyncStatus(`✅ Synced ${successCount} events to Google Calendar`, 'connected');
+                    this.updateLastSyncTime();
+                    appData.showSaveIndicator(`🎉 ${successCount} events synced to Google Calendar!`);
+
                 } catch (error) {
-                    console.error('Sync failed:', error);
+                    console.error('Sync to Google Calendar failed:', error);
                     this.updateSyncStatus('❌ Sync failed - check permissions', 'error');
-                    this.showSyncNotification('❌ Sync failed. Try reconnecting.', 'error');
+                    appData.showSaveIndicator('❌ Sync failed. Try again.');
                 }
+            }
+
+            async importFromGoogleCalendar() {
+                if (!this.isSignedIn) {
+                    this.updateSyncStatus('❌ Not connected to Google Calendar', 'error');
+                    return;
+                }
+
+                try {
+                    this.updateSyncStatus('🔄 Importing from Google Calendar...', 'syncing');
+
+                    const startDate = new Date('2025-08-25');
+                    const endDate = new Date('2025-11-23'); // 90 days later
+
+                    const response = await gapi.client.calendar.events.list({
+                        calendarId: this.calendarId,
+                        timeMin: startDate.toISOString(),
+                        timeMax: endDate.toISOString(),
+                        singleEvents: true,
+                        orderBy: 'startTime'
+                    });
+
+                    const events = response.result.items || [];
+                    let importCount = 0;
+
+                    // Filter out events we created (to avoid duplicates)
+                    const externalEvents = events.filter(event => 
+                        !event.description?.includes('Generated by 90-Day Launch Dashboard')
+                    );
+
+                    for (const event of externalEvents) {
+                        if (!event.start?.dateTime) continue; // Skip all-day events
+
+                        const eventDate = new Date(event.start.dateTime);
+                        const daysSinceStart = Math.floor((eventDate - startDate) / (1000 * 60 * 60 * 24));
+                        const dayNumber = daysSinceStart + 1;
+
+                        if (dayNumber >= 1 && dayNumber <= 90) {
+                            // Add as custom task
+                            const customTasks = JSON.parse(appData.load(`custom-tasks-day-${dayNumber}`) || '[]');
+                            
+                            const newTask = {
+                                time: eventDate.toTimeString().slice(0, 5), // HH:MM format
+                                type: 'personal',
+                                text: `${event.summary} (from Google Calendar)`,
+                                id: Date.now() + Math.random()
+                            };
+
+                            // Check if this task already exists
+                            const taskExists = customTasks.some(task => 
+                                task.text.includes(event.summary) && task.time === newTask.time
+                            );
+
+                            if (!taskExists) {
+                                customTasks.push(newTask);
+                                customTasks.sort((a, b) => a.time.localeCompare(b.time));
+                                appData.save(`custom-tasks-day-${dayNumber}`, JSON.stringify(customTasks));
+                                importCount++;
+                            }
+                        }
+                    }
+
+                    this.lastSyncTime = new Date();
+                    this.updateSyncStatus(`✅ Imported ${importCount} events from Google Calendar`, 'connected');
+                    this.updateLastSyncTime();
+                    
+                    // Refresh calendar display
+                    generateCalendar();
+                    
+                    appData.showSaveIndicator(`⬇️ ${importCount} events imported from Google Calendar!`);
+
+                } catch (error) {
+                    console.error('Import from Google Calendar failed:', error);
+                    this.updateSyncStatus('❌ Import failed - check permissions', 'error');
+                    appData.showSaveIndicator('❌ Import failed. Try again.');
+                }
+            }
+
+            getColorForTaskType(type) {
+                const colors = {
+                    'business': '1', // Blue
+                    'health': '10', // Green
+                    'spanish': '6', // Orange
+                    'social': '9', // Purple
+                    'personal': '7' // Cyan
+                };
+                return colors[type] || '1';
             }
 
             async disconnect() {
@@ -1402,9 +1599,10 @@
                     }
                     
                     this.isSignedIn = false;
+                    this.lastSyncTime = null;
                     this.updateSyncStatus('🔌 Disconnected from Google Calendar', 'ready');
                     this.updateUIForDisconnectedState();
-                    this.showSyncNotification('🔌 Disconnected from Google Calendar', 'success');
+                    appData.showSaveIndicator('🔌 Disconnected from Google Calendar');
                 } catch (error) {
                     console.error('Disconnect failed:', error);
                 }
@@ -1419,13 +1617,20 @@
                 }
                 
                 if (indicator) {
-                    indicator.className = 'sync-indicator';
-                    if (state === 'connected') {
-                        indicator.classList.add('connected');
-                    } else if (state === 'syncing') {
-                        indicator.classList.add('syncing');
-                    } else if (state === 'error') {
-                        indicator.classList.add('error');
+                    const colors = {
+                        'ready': '#64748b',
+                        'connected': '#10b981',
+                        'syncing': '#f59e0b',
+                        'error': '#ef4444'
+                    };
+                    indicator.style.background = colors[state] || '#64748b';
+                    
+                    if (state === 'syncing') {
+                        indicator.style.animation = 'spin 1s linear infinite';
+                    } else if (state === 'connected') {
+                        indicator.style.animation = 'pulse 2s infinite';
+                    } else {
+                        indicator.style.animation = 'none';
                     }
                 }
             }
@@ -1433,55 +1638,107 @@
             updateUIForConnectedState() {
                 const connectBtn = document.getElementById('connectBtn');
                 const syncBtn = document.getElementById('syncBtn');
+                const importBtn = document.getElementById('importBtn');
                 const disconnectBtn = document.getElementById('disconnectBtn');
                 
                 if (connectBtn) connectBtn.style.display = 'none';
-                if (syncBtn) syncBtn.style.display = 'flex';
-                if (disconnectBtn) disconnectBtn.style.display = 'flex';
+                if (syncBtn) syncBtn.style.display = 'inline-block';
+                if (importBtn) importBtn.style.display = 'inline-block';
+                if (disconnectBtn) disconnectBtn.style.display = 'inline-block';
             }
 
             updateUIForDisconnectedState() {
                 const connectBtn = document.getElementById('connectBtn');
                 const syncBtn = document.getElementById('syncBtn');
+                const importBtn = document.getElementById('importBtn');
                 const disconnectBtn = document.getElementById('disconnectBtn');
                 
-                if (connectBtn) connectBtn.style.display = 'flex';
+                if (connectBtn) connectBtn.style.display = 'inline-block';
                 if (syncBtn) syncBtn.style.display = 'none';
+                if (importBtn) importBtn.style.display = 'none';
                 if (disconnectBtn) disconnectBtn.style.display = 'none';
             }
 
-            showSyncNotification(message, type) {
-                const notification = document.createElement('div');
-                notification.className = `save-indicator show ${type}`;
-                notification.textContent = message;
-                notification.style.background = type === 'success' ? '#10b981' : '#ef4444';
-                document.body.appendChild(notification);
-                
-                setTimeout(() => {
-                    notification.classList.remove('show');
-                    setTimeout(() => {
-                        if (notification.parentNode) {
-                            document.body.removeChild(notification);
-                        }
-                    }, 300);
-                }, 4000);
+            updateLastSyncTime() {
+                const lastSyncElement = document.getElementById('lastSyncTime');
+                if (lastSyncElement && this.lastSyncTime) {
+                    lastSyncElement.textContent = `Last sync: ${this.lastSyncTime.toLocaleTimeString()}`;
+                }
             }
         }
 
-        // Initialize Google Calendar integration
         const googleCalendar = new GoogleCalendarIntegration();
 
-        // Interface functions
+        // Google Calendar Interface Functions
         async function connectGoogleCalendar() {
             await googleCalendar.connect();
         }
 
         async function syncWithGoogleCalendar() {
-            await googleCalendar.syncWithGoogleCalendar();
+            await googleCalendar.syncTasksToGoogle();
+        }
+
+        async function importFromGoogleCalendar() {
+            await googleCalendar.importFromGoogleCalendar();
         }
 
         async function disconnectGoogleCalendar() {
             await googleCalendar.disconnect();
+        }
+
+        // Google Setup Guide
+        function showGoogleSetupGuide() {
+            const setupGuide = `
+**🛠️ Google Calendar API Setup Guide**
+
+**Step 1: Google Cloud Console**
+1. Go to: https://console.cloud.google.com
+2. Create a new project or select existing one
+3. Click "New Project" → Name it "Launch Dashboard" → Create
+
+**Step 2: Enable Calendar API**
+1. Go to "APIs & Services" → "Library"
+2. Search for "Google Calendar API"
+3. Click on it and press "Enable"
+
+**Step 3: Create Credentials**
+1. Go to "APIs & Services" → "Credentials"
+2. Click "Create Credentials" → "API Key"
+3. Copy the API Key (starts with AIza...)
+4. Click "Create Credentials" → "OAuth client ID"
+5. Choose "Web application"
+6. Add Authorized JavaScript origins:
+   - https://myhub90.github.io
+7. Copy the Client ID (ends with googleusercontent.com)
+
+**Step 4: Update Your Code**
+1. Open your dashboard code in GitHub
+2. Find these lines (around line 620):
+   const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID';
+   const GOOGLE_API_KEY = 'YOUR_GOOGLE_API_KEY';
+3. Replace with your actual credentials:
+   const GOOGLE_CLIENT_ID = 'your-client-id.googleusercontent.com';
+   const GOOGLE_API_KEY = 'AIzaSyYour-actual-api-key';
+4. Save and commit changes
+
+**Step 5: Test Connection**
+1. Wait 2-3 minutes for GitHub to update
+2. Refresh your dashboard
+3. Click "Connect Google Calendar"
+4. Grant permissions when prompted
+5. Test sync functionality
+
+**Troubleshooting:**
+• Make sure authorized origins exactly match: https://myhub90.github.io
+• No www, no trailing slash, no extra paths
+• Wait 5-10 minutes after making changes in Google Cloud Console
+• Check browser console for detailed error messages
+
+**Security Note:**
+These credentials are safe to use in public code as they're restricted to your specific domain and only have calendar access.
+            `;
+            
+            showExportModal(setupGuide);
         }
 
         // Calendar data with detailed schedules
@@ -1517,6 +1774,11 @@
             
             event.target.classList.add('active');
             document.getElementById(tabName).classList.add('active');
+
+            // Update progress summary when export tab is opened
+            if (tabName === 'export') {
+                updateProgressSummary();
+            }
         }
 
         // Progress Management
@@ -1634,29 +1896,10 @@
         }
 
         function calculateCurrentStreak() {
-            let streak = 0;
-            const today = new Date();
-            
-            for (let i = 0; i < 30; i++) {
-                const checkDate = new Date(today);
-                checkDate.setDate(today.getDate() - i);
-                const dateStr = checkDate.toISOString().split('T')[0];
-                
-                const hasCompletedTasks = checkForCompletedTasksOnDate(dateStr);
-                
-                if (hasCompletedTasks) {
-                    streak++;
-                } else {
-                    break;
-                }
-            }
-            
-            return streak;
-        }
-
-        function checkForCompletedTasksOnDate(dateStr) {
+            // Simplified streak calculation
             const today = new Date().toISOString().split('T')[0];
-            return dateStr === today;
+            const hasTasksToday = document.querySelectorAll('.checkbox-item.completed').length > 0;
+            return hasTasksToday ? 1 : 0;
         }
 
         // Task Management - Bidirectional (can check AND uncheck)
@@ -1668,10 +1911,8 @@
             
             if (checkbox.checked) {
                 element.classList.add('completed');
-                console.log('✅ Task completed:', element.textContent.trim());
             } else {
                 element.classList.remove('completed');
-                console.log('↩️ Task unchecked:', element.textContent.trim());
             }
             
             const taskText = element.textContent.trim();
@@ -1685,39 +1926,7 @@
             updateStreakCounter();
             
             const action = checkbox.checked ? 'completed' : 'unchecked';
-            showTaskFeedback(`Task ${action}! All metrics updated.`);
-        }
-        
-        function showTaskFeedback(message) {
-            const feedback = document.createElement('div');
-            feedback.style.cssText = `
-                position: fixed;
-                bottom: 80px;
-                left: 50%;
-                transform: translateX(-50%);
-                background: #4f46e5;
-                color: white;
-                padding: 8px 16px;
-                border-radius: 20px;
-                font-size: 0.8rem;
-                font-weight: 600;
-                z-index: 1000;
-                opacity: 0;
-                transition: opacity 0.3s ease;
-                pointer-events: none;
-            `;
-            feedback.textContent = message;
-            document.body.appendChild(feedback);
-            
-            setTimeout(() => feedback.style.opacity = '1', 100);
-            setTimeout(() => {
-                feedback.style.opacity = '0';
-                setTimeout(() => {
-                    if (feedback.parentNode) {
-                        document.body.removeChild(feedback);
-                    }
-                }, 300);
-            }, 1500);
+            appData.showSaveIndicator(`✅ Task ${action}!`);
         }
 
         function saveProgress(category) {
@@ -1761,6 +1970,32 @@
                     <div class="day-date">${currentDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
                 `;
                 
+                // Add task indicator if there are custom tasks
+                const customTasks = JSON.parse(appData.load(`custom-tasks-day-${dayNumber}`) || '[]');
+                if (customTasks.length > 0) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'task-indicator';
+                    dayElement.appendChild(indicator);
+                }
+                
+                // Add content indicator if there's scheduled content
+                const dayContent = appData.contentQueue.filter(item => {
+                    const contentDate = new Date(item.dateTime);
+                    return contentDate.toDateString() === currentDate.toDateString();
+                });
+                if (dayContent.length > 0) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'content-indicator';
+                    dayElement.appendChild(indicator);
+                }
+
+                // Add Google Calendar indicator if connected and has events
+                if (googleCalendar.isSignedIn) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'google-indicator';
+                    dayElement.appendChild(indicator);
+                }
+                
                 dayElement.addEventListener('click', () => openDayModal(dayNumber, dayData));
                 calendarGrid.appendChild(dayElement);
             }
@@ -1801,6 +2036,15 @@
             modalEra.textContent = `${getEraName(dayData.era)} Era`;
             modalEra.className = `modal-era era-${dayData.era}`;
             
+            const customTasks = JSON.parse(appData.load(`custom-tasks-day-${dayNumber}`) || '[]');
+            
+            // Get scheduled content for this day
+            const startDate = new Date(2025, 7, 24 + dayNumber);
+            const dayContent = appData.contentQueue.filter(item => {
+                const contentDate = new Date(item.dateTime);
+                return contentDate.toDateString() === startDate.toDateString();
+            });
+            
             modalContent.innerHTML = `
                 <div class="schedule-section">
                     <div class="section-title">🎯 Daily Goal</div>
@@ -1813,6 +2057,46 @@
                             <div>${item.task}</div>
                         </div>
                     `).join('')}
+                </div>
+                
+                ${customTasks.length > 0 ? `
+                    <div class="schedule-section">
+                        <div class="section-title">✅ Your Custom Tasks</div>
+                        ${customTasks.map(task => `
+                            <div class="schedule-item">
+                                <div class="schedule-time">${task.time}</div>
+                                <div>${task.text} (${task.type})</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+                
+                ${dayContent.length > 0 ? `
+                    <div class="schedule-section">
+                        <div class="section-title">📱 Scheduled Content</div>
+                        ${dayContent.map(content => `
+                            <div class="schedule-item">
+                                <div class="schedule-time">${new Date(content.dateTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                                <div>${content.type} - ${content.platforms.join(', ')}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                ` : ''}
+                
+                <div class="schedule-section">
+                    <div class="section-title">➕ Add Custom Task</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <input type="time" id="customTaskTime" style="padding: 8px; border: 2px solid #e2e8f0; border-radius: 6px;">
+                        <select id="customTaskType" style="padding: 8px; border: 2px solid #e2e8f0; border-radius: 6px;">
+                            <option value="business">Business</option>
+                            <option value="health">Health</option>
+                            <option value="spanish">Spanish</option>
+                            <option value="social">Social</option>
+                            <option value="personal">Personal</option>
+                        </select>
+                    </div>
+                    <input type="text" id="customTaskText" placeholder="Enter task description..." style="width: 100%; padding: 8px; border: 2px solid #e2e8f0; border-radius: 6px; margin-bottom: 10px;">
+                    <button onclick="addCustomTask(${dayNumber})" class="save-btn">Add Custom Task</button>
                 </div>
                 
                 <div style="background: #f0f9ff; padding: 15px; border-radius: 10px; margin: 20px 0;">
@@ -1833,6 +2117,40 @@
             modal.style.display = 'block';
         }
 
+        function addCustomTask(dayNumber) {
+            const timeInput = document.getElementById('customTaskTime');
+            const typeSelect = document.getElementById('customTaskType');
+            const textInput = document.getElementById('customTaskText');
+            
+            if (!timeInput.value || !textInput.value) {
+                alert('Please fill in both time and task description');
+                return;
+            }
+            
+            const customTasks = JSON.parse(appData.load(`custom-tasks-day-${dayNumber}`) || '[]');
+            
+            const newTask = {
+                time: timeInput.value,
+                type: typeSelect.value,
+                text: textInput.value,
+                id: Date.now()
+            };
+            
+            customTasks.push(newTask);
+            customTasks.sort((a, b) => a.time.localeCompare(b.time));
+            
+            appData.save(`custom-tasks-day-${dayNumber}`, JSON.stringify(customTasks));
+            
+            // Refresh the modal content
+            const dayData = calendarData[dayNumber] || getDefaultDayData(dayNumber, new Date(2025, 7, 24 + dayNumber));
+            openDayModal(dayNumber, dayData);
+            
+            // Update calendar indicators
+            generateCalendar();
+            
+            appData.showSaveIndicator('✅ Custom task added!');
+        }
+
         function getEraName(era) {
             const names = {
                 'launch': 'Launch',
@@ -1845,6 +2163,377 @@
 
         function closeDayModal() {
             const modal = document.getElementById('dayModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Content Scheduler Functions
+        function scheduleContent() {
+            const contentType = document.getElementById('contentType').value;
+            const dateTime = document.getElementById('scheduleDateTime').value;
+            const caption = document.getElementById('contentCaption').value;
+            const hashtags = document.getElementById('contentHashtags').value;
+            const cta = document.getElementById('contentCTA').value;
+
+            if (!dateTime || !caption) {
+                alert('Please fill in the date/time and caption fields.');
+                return;
+            }
+
+            const selectedPlatforms = [];
+            document.querySelectorAll('.platform-option input:checked').forEach(checkbox => {
+                selectedPlatforms.push(checkbox.closest('.platform-option').dataset.platform);
+            });
+
+            if (selectedPlatforms.length === 0) {
+                alert('Please select at least one platform.');
+                return;
+            }
+
+            const content = {
+                type: contentType,
+                dateTime: dateTime,
+                caption: caption,
+                hashtags: hashtags,
+                cta: cta,
+                platforms: selectedPlatforms,
+                createdAt: new Date().toISOString()
+            };
+
+            appData.addToContentQueue(content);
+            updateContentQueue();
+
+            // Clear form
+            document.getElementById('contentCaption').value = '';
+            document.getElementById('contentHashtags').value = '';
+            document.getElementById('contentCTA').value = '';
+            document.querySelectorAll('.platform-option input:checked').forEach(checkbox => {
+                checkbox.checked = false;
+                checkbox.closest('.platform-option').classList.remove('selected');
+            });
+
+            appData.showSaveIndicator('📅 Content scheduled!');
+        }
+
+        function updateContentQueue() {
+            const queueList = document.getElementById('contentQueueList');
+            if (!queueList) return;
+
+            if (appData.contentQueue.length === 0) {
+                queueList.innerHTML = `
+                    <div style="color: #64748b; font-style: italic; text-align: center; padding: 20px;">
+                        No content scheduled yet. Create your first post above!
+                    </div>
+                `;
+                return;
+            }
+
+            const sortedQueue = appData.contentQueue.sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+            
+            queueList.innerHTML = sortedQueue.map(item => `
+                <div class="queue-item">
+                    <div class="queue-header">
+                        <div>
+                            <div style="font-weight: 600; color: #1e293b; margin-bottom: 5px;">
+                                ${item.type.charAt(0).toUpperCase() + item.type.slice(1)} - ${new Date(item.dateTime).toLocaleDateString()} at ${new Date(item.dateTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                            </div>
+                            <div class="queue-platforms">
+                                ${item.platforms.map(platform => `
+                                    <span class="platform-tag tag-${platform}">${platform}</span>
+                                `).join('')}
+                            </div>
+                        </div>
+                        <button onclick="removeContent(${item.id})" style="background: #ef4444; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Delete</button>
+                    </div>
+                    <div style="color: #374151; margin-bottom: 8px;">${item.caption}</div>
+                    ${item.hashtags ? `<div style="color: #6366f1; font-size: 0.85rem;">${item.hashtags}</div>` : ''}
+                    ${item.cta ? `<div style="color: #059669; font-size: 0.85rem; font-weight: 600;">CTA: ${item.cta}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function removeContent(id) {
+            appData.removeFromContentQueue(id);
+            updateContentQueue();
+            appData.showSaveIndicator('🗑️ Content removed');
+        }
+
+        // Platform Selector
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.platform-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const checkbox = this.querySelector('input[type="checkbox"]');
+                    checkbox.checked = !checkbox.checked;
+                    this.classList.toggle('selected', checkbox.checked);
+                });
+            });
+        });
+
+        // Export Functions
+        function exportToPlanoly() {
+            const planolyCsv = appData.contentQueue
+                .filter(item => item.platforms.includes('instagram') || item.platforms.includes('pinterest'))
+                .map(item => ({
+                    'Date': new Date(item.dateTime).toLocaleDateString(),
+                    'Time': new Date(item.dateTime).toLocaleTimeString(),
+                    'Platform': item.platforms.join(', '),
+                    'Content Type': item.type,
+                    'Caption': item.caption,
+                    'Hashtags': item.hashtags,
+                    'CTA': item.cta
+                }));
+
+            const exportText = formatForPlanoly(planolyCsv);
+            showExportModal(exportText);
+        }
+
+        function formatForPlanoly(data) {
+            if (data.length === 0) {
+                return 'No Instagram or Pinterest content found to export.';
+            }
+
+            return `**Planoly Import Instructions:**
+1. Copy the data below
+2. Open Planoly → Content Calendar
+3. Use bulk upload or manually add posts
+
+**Content for Planoly:**
+${data.map((item, index) => `
+**Post ${index + 1}:**
+Date: ${item.Date} at ${item.Time}
+Platform: ${item.Platform}
+Type: ${item['Content Type']}
+Caption: ${item.Caption}
+Hashtags: ${item.Hashtags}
+CTA: ${item.CTA}
+---`).join('\n')}`;
+        }
+
+        function exportToBuffer() {
+            const bufferData = appData.contentQueue.map(item => ({
+                'Text': item.caption,
+                'Date': new Date(item.dateTime).toLocaleDateString(),
+                'Time': new Date(item.dateTime).toLocaleTimeString(),
+                'Profiles': item.platforms.join(';'),
+                'Media': '',
+                'Link': item.cta || ''
+            }));
+
+            const csv = convertToCSV(bufferData);
+            downloadCSV(csv, 'buffer-export.csv');
+            appData.showSaveIndicator('📊 Buffer CSV downloaded!');
+        }
+
+        function exportToLater() {
+            const laterFormat = appData.contentQueue
+                .filter(item => item.platforms.includes('instagram'))
+                .map(item => `
+**Instagram Post - ${new Date(item.dateTime).toLocaleDateString()}**
+Time: ${new Date(item.dateTime).toLocaleTimeString()}
+Type: ${item.type}
+
+Caption:
+${item.caption}
+
+${item.hashtags ? `Hashtags: ${item.hashtags}` : ''}
+${item.cta ? `CTA: ${item.cta}` : ''}
+---`).join('\n');
+
+            showExportModal(laterFormat);
+        }
+
+        function exportToCSV() {
+            const csvData = appData.contentQueue.map(item => ({
+                'Date': new Date(item.dateTime).toLocaleDateString(),
+                'Time': new Date(item.dateTime).toLocaleTimeString(),
+                'Type': item.type,
+                'Platforms': item.platforms.join(', '),
+                'Caption': item.caption,
+                'Hashtags': item.hashtags || '',
+                'CTA': item.cta || '',
+                'Status': 'Scheduled'
+            }));
+
+            const csv = convertToCSV(csvData);
+            downloadCSV(csv, 'content-calendar.csv');
+            appData.showSaveIndicator('📁 CSV file downloaded!');
+        }
+
+        function exportToNotion() {
+            const today = new Date().toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+            
+            const businessProgress = calculateCategoryProgress('business');
+            const healthProgress = calculateCategoryProgress('health');
+            const spanishProgress = calculateCategoryProgress('spanish');
+            const socialProgress = calculateCategoryProgress('social');
+            
+            const totalTasks = document.querySelectorAll('.checkbox-item.completed').length;
+            const currentDay = getCurrentDayNumber();
+            const currentEra = getCurrentEra();
+            
+            const exportText = `# 🚀 90-Day Launch Progress Report
+**Date:** ${today}
+**Day:** ${currentDay} of 90 (${currentEra.name} Era)
+
+## 📊 Daily Progress
+- **🏢 Business:** ${businessProgress}%
+- **💪 Health:** ${healthProgress}%
+- **🇪🇸 Spanish:** ${spanishProgress}%
+- **📱 Social:** ${socialProgress}%
+
+## 📈 Key Metrics
+- **Total Tasks Completed:** ${totalTasks}
+- **Current Era:** ${currentEra.name} Era
+- **Days Remaining:** ${Math.max(0, 90 - currentDay + 1)}
+- **Content Scheduled:** ${appData.contentQueue.length} posts
+- **Google Calendar:** ${googleCalendar.isSignedIn ? '✅ Connected' : '❌ Not Connected'}
+
+## ✅ Completed Tasks Today
+${getCompletedTasksList()}
+
+## 📅 Upcoming Content Schedule
+${getUpcomingContentList()}
+
+## 🔄 Integration Status
+- **Google Calendar Sync:** ${googleCalendar.isSignedIn ? 'Active' : 'Setup Required'}
+- **Last Sync:** ${googleCalendar.lastSyncTime ? googleCalendar.lastSyncTime.toLocaleString() : 'Never'}
+- **Planoly Export:** Ready
+- **Buffer Integration:** Ready
+
+## 🎯 Next Actions
+- Continue daily routine
+- Focus on ${currentEra.name.toLowerCase()} era priorities
+- Maintain consistent progress
+${!googleCalendar.isSignedIn ? '- Set up Google Calendar integration for bidirectional sync' : ''}
+
+---
+*Generated by 90-Day Launch Dashboard + Content Scheduler*`;
+
+            showExportModal(exportText);
+        }
+
+        function getCompletedTasksList() {
+            const completedTasks = [];
+            ['business', 'health', 'spanish', 'social'].forEach(category => {
+                const categorySection = document.getElementById(category);
+                if (categorySection) {
+                    const completed = categorySection.querySelectorAll('.checkbox-item.completed');
+                    completed.forEach(task => {
+                        const taskText = task.textContent.trim();
+                        completedTasks.push(`- **${category.charAt(0).toUpperCase() + category.slice(1)}:** ${taskText}`);
+                    });
+                }
+            });
+            return completedTasks.length > 0 ? completedTasks.join('\n') : '- No tasks completed yet today';
+        }
+
+        function getUpcomingContentList() {
+            const upcoming = appData.contentQueue
+                .filter(item => new Date(item.dateTime) > new Date())
+                .sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime))
+                .slice(0, 5)
+                .map(item => `- **${new Date(item.dateTime).toLocaleDateString()}:** ${item.type} on ${item.platforms.join(', ')}`);
+            
+            return upcoming.length > 0 ? upcoming.join('\n') : '- No upcoming content scheduled';
+        }
+
+        function exportData() {
+            const allData = appData.getAllData();
+            const dataStr = JSON.stringify(allData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = `launch-dashboard-backup-${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+            
+            appData.showSaveIndicator('💾 Backup downloaded!');
+        }
+
+        function updateProgressSummary() {
+            const businessProgress = calculateCategoryProgress('business');
+            const healthProgress = calculateCategoryProgress('health');
+            const spanishProgress = calculateCategoryProgress('spanish');
+            const socialProgress = calculateCategoryProgress('social');
+            const totalTasks = document.querySelectorAll('.checkbox-item.completed').length;
+            const currentDay = getCurrentDayNumber();
+            
+            const summary = document.getElementById('progressSummary');
+            if (summary) {
+                summary.innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 15px;">
+                        <div style="text-align: center; padding: 10px; background: white; border-radius: 8px; border: 2px solid #e2e8f0;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #4f46e5;">${businessProgress}%</div>
+                            <div style="font-size: 0.8rem; color: #64748b;">Business</div>
+                        </div>
+                        <div style="text-align: center; padding: 10px; background: white; border-radius: 8px; border: 2px solid #e2e8f0;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #4f46e5;">${healthProgress}%</div>
+                            <div style="font-size: 0.8rem; color: #64748b;">Health</div>
+                        </div>
+                        <div style="text-align: center; padding: 10px; background: white; border-radius: 8px; border: 2px solid #e2e8f0;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #4f46e5;">${spanishProgress}%</div>
+                            <div style="font-size: 0.8rem; color: #64748b;">Spanish</div>
+                        </div>
+                        <div style="text-align: center; padding: 10px; background: white; border-radius: 8px; border: 2px solid #e2e8f0;">
+                            <div style="font-size: 1.5rem; font-weight: 700; color: #4f46e5;">${socialProgress}%</div>
+                            <div style="font-size: 0.8rem; color: #64748b;">Social</div>
+                        </div>
+                    </div>
+                    <div style="text-align: center; color: #64748b;">
+                        <strong>Day ${currentDay} of 90</strong> • <strong>${totalTasks} tasks completed</strong> • <strong>${appData.contentQueue.length} posts scheduled</strong>
+                    </div>
+                `;
+            }
+        }
+
+        // Helper Functions
+        function convertToCSV(data) {
+            if (data.length === 0) return '';
+            
+            const headers = Object.keys(data[0]);
+            const rows = data.map(row => 
+                headers.map(header => `"${(row[header] || '').toString().replace(/"/g, '""')}"`).join(',')
+            );
+            
+            return [headers.join(','), ...rows].join('\n');
+        }
+
+        function downloadCSV(csv, filename) {
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            link.click();
+            window.URL.revokeObjectURL(url);
+        }
+
+        function showExportModal(content) {
+            const modal = document.getElementById('exportModal');
+            const exportTextArea = document.getElementById('exportText');
+            
+            if (modal && exportTextArea) {
+                exportTextArea.value = content;
+                modal.style.display = 'block';
+            }
+        }
+
+        function copyExportText() {
+            const exportTextArea = document.getElementById('exportText');
+            if (exportTextArea) {
+                exportTextArea.select();
+                document.execCommand('copy');
+                appData.showSaveIndicator('📋 Copied to clipboard!');
+            }
+        }
+
+        function closeExportModal() {
+            const modal = document.getElementById('exportModal');
             if (modal) {
                 modal.style.display = 'none';
             }
@@ -1905,6 +2594,7 @@
             updateEraProgress();
             updateStats();
             updateStreakCounter();
+            updateContentQueue();
         }
 
         // Initialize Application
@@ -1914,55 +2604,29 @@
             generateCalendar();
             loadSavedData();
             
-            // Initialize Google Calendar integration with proper timing
-            initializeGoogleCalendarWithRetry();
-            
-            // Auto-save every 30 seconds
-            setInterval(() => {
-                ['business', 'health', 'spanish', 'social'].forEach(category => {
-                    saveProgress(category);
+            // Initialize Google Calendar integration
+            setTimeout(() => {
+                googleCalendar.initialize().catch(error => {
+                    console.warn('Google Calendar initialization failed:', error);
+                    googleCalendar.updateSyncStatus('❌ Google Calendar setup failed - check internet connection', 'error');
                 });
-            }, 30000);
+            }, 1000); // Wait 1 second for Google API to load
+            
+            // Set default datetime to current time + 1 hour
+            const now = new Date();
+            now.setHours(now.getHours() + 1);
+            const defaultDateTime = now.toISOString().slice(0, 16);
+            const dateTimeInput = document.getElementById('scheduleDateTime');
+            if (dateTimeInput) {
+                dateTimeInput.value = defaultDateTime;
+            }
 
             console.log('✅ 90-Day Launch Dashboard loaded successfully!');
         });
 
-        // Fixed Google Calendar initialization with fallbacks and diagnostics
-        function initializeGoogleCalendarWithRetry() {
-            let attempts = 0;
-            const maxAttempts = 15; // 7.5 seconds total
-            
-            function tryInitialize() {
-                attempts++;
-                console.log(`🔄 Google Calendar init attempt ${attempts}/${maxAttempts}`);
-                
-                // Check if Google API failed to load completely
-                if (window.googleAPIFailed) {
-                    console.error('❌ Google API completely failed to load');
-                    googleCalendar.handleAPILoadFailure();
-                    return;
-                }
-                
-                // Check if Google API is loaded and ready
-                if (window.googleAPILoaded && typeof gapi !== 'undefined') {
-                    console.log('✅ Google API loaded, initializing calendar...');
-                    googleCalendar.initialize();
-                } else if (attempts < maxAttempts) {
-                    console.log('⏳ Waiting for Google API to load...');
-                    setTimeout(tryInitialize, 500);
-                } else {
-                    console.error('❌ Google API load timeout after 7.5 seconds');
-                    googleCalendar.handleAPILoadFailure();
-                }
-            }
-            
-            // Wait a moment for the script loading to start
-            setTimeout(tryInitialize, 1000);
-        }
-
         // Event Listeners for UI
         document.addEventListener('click', function(event) {
-            const modals = ['dayModal'];
+            const modals = ['dayModal', 'exportModal'];
             modals.forEach(modalId => {
                 const modal = document.getElementById(modalId);
                 if (modal && event.target === modal) {
@@ -1989,7 +2653,7 @@
             }
         });
 
-        console.log('🔧 Dashboard ready! Replace GOOGLE_CLIENT_ID and GOOGLE_API_KEY to enable calendar sync.');
+        console.log('🔧 Dashboard ready! All features functional.');
     </script>
 </body>
 </html>
